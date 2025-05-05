@@ -3,7 +3,7 @@ using static ScheduleAPI.Common.Enums;
 
 namespace ScheduleAPI.Model
 {
-    public class TaskEntity : ITask
+    public class Task : ITask
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
