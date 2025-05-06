@@ -67,38 +67,6 @@ namespace ScheduleAPI.Services
             });
         }
 
-        public string? ValidateToken(string token)
-        {
-            if (string.IsNullOrEmpty(token))
-            {
-                return null;
-            }
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSecret);
-
-            try
-            {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
-
-                var jwtToken = (JwtSecurityToken)validatedToken;
-                var userId = jwtToken.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
-
-                return userId;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -108,11 +76,11 @@ namespace ScheduleAPI.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(JwtRegisteredClaimNames.Iss, _jwtIssuer),
-                    new Claim(JwtRegisteredClaimNames.Aud, _jwtAudience)
+                    new Claim(ClaimTypes.Name, user.Username)
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
+                Issuer = _jwtIssuer,
+                Audience = _jwtAudience,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature
