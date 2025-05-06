@@ -28,7 +28,7 @@ namespace ScheduleAPI.Services
                 return await System.Threading.Tasks.Task.FromResult(_repository.Tasks);
             }
 
-            var schedules = _repository.Schedules.Where(x => x.UserID == UserID).ToList();
+            var schedules = _repository.Schedules.Where(x => x.UserId == UserID).ToList();
             List<Guid> userTaskID = schedules.SelectMany(x => x._schedule).Select(x => x.Id).ToList();
 
             return await System.Threading.Tasks.Task.FromResult(_repository.Tasks.Where(x => userTaskID.Contains((x.Id))).ToList());
@@ -44,7 +44,7 @@ namespace ScheduleAPI.Services
                 //TODO: Handle this case properly
             }
             var schedule = await System.Threading.Tasks.Task.FromResult
-                (_repository.Schedules.Where(x => x.UserID == UserID && x.ID == sched).ToList());
+                (_repository.Schedules.Where(x => x.UserId == UserID && x.ID == sched).ToList());
 
             if (schedule == null)
             {
@@ -67,7 +67,7 @@ namespace ScheduleAPI.Services
         }
 
         //Add task to schedule
-        public async Task<TaskDTO> AddTaskAsync(TaskDTO newTaks, string userid)
+        public async Task<bool> AddTaskAsync(TaskDTO newTaks, string userid)
         {
 #pragma warning disable CS8629 // Nullable value type may be null, handled at Task.cs
             /*var task = new Model.Task
@@ -81,7 +81,6 @@ namespace ScheduleAPI.Services
                 ScheduledStartTime = newTaks.ScheduledStartTime != null ? DateTime.Parse(newTaks.ScheduledStartTime) : null,
                 ScheduledEndTime = newTaks.ScheduledEndTime != null ? DateTime.Parse(newTaks.ScheduledEndTime) : null,
                 ScheduledDay = newTaks.ScheduledDay
-
             };*/
 #pragma warning restore CS8629 // Nullable value type may be null.
 
@@ -89,8 +88,9 @@ namespace ScheduleAPI.Services
 
             // Add the task to the repository
             _repository.Tasks.Add(task);
+
             // Add the task to the user's schedule
-            var schedule = _repository.Schedules.FirstOrDefault(x => x.UserID == userid);
+            var schedule = _repository.Schedules.FirstOrDefault(x => x.UserId == userid);
             if (schedule != null)
             {
                 schedule._schedule.Add(task);
@@ -101,12 +101,13 @@ namespace ScheduleAPI.Services
                 var newSchedule = new Schedule
                 {
                     // TODO: Use ScheduleService to create a new schedule, and prompt for name
-                    UserID = userid,
+                    UserId = userid,
                     _schedule = new List<Model.Task> { task }
                 };
                 _repository.Schedules.Add(newSchedule);
             }
-            return await System.Threading.Tasks.Task.FromResult(newTaks);
+
+            return true;
         }
         //Dekete task from schedule and repository
         public async Task<bool> DeleteTaskAsync(Guid id, string UserID)
@@ -117,7 +118,7 @@ namespace ScheduleAPI.Services
                 return false;
             }
             _repository.Tasks.Remove(task);
-            var schedule = _repository.Schedules.FirstOrDefault(x => x.UserID == UserID);
+            var schedule = _repository.Schedules.FirstOrDefault(x => x.UserId == UserID);
             if (schedule != null)
             {
                 schedule._schedule.Remove(task);

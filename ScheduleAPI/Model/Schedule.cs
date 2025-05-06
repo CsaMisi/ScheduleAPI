@@ -10,6 +10,6 @@ namespace ScheduleAPI.Model
         public int TotalDays { get; set; }
         public int TotalHours { get; set; }
         public List<Task> _schedule = new List<Task>();
-        public string? UserID { get; set; } //For authenticatuion via JWT
+        public string? UserId { get; set; } //For authenticatuion via JWT
     }
 }
