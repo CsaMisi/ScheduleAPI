@@ -1,18 +1,18 @@
 ﻿using ScheduleAPI.Data;
+using ScheduleAPI.Interfaces;
 using ScheduleAPI.Model;
 using System.Reflection;
 
 namespace ScheduleAPI.Services
 {
-    public class ScheduleService
+    public class ScheduleService : IScheduleService
     {
-        
-        private readonly InMemory _database;
-        private readonly TaskService _taskService;
+        private readonly IRepository _repository;
+        private readonly ITaskService _taskService;
 
-        public ScheduleService(InMemory database, TaskService taskService)
+        public ScheduleService(IRepository repository, ITaskService taskService)
         {
-            _database = database;
+            _repository = repository;
             _taskService = taskService;
         }
 
@@ -20,16 +20,17 @@ namespace ScheduleAPI.Services
         {
             if (string.IsNullOrEmpty(userId))
             {
-                return await System.Threading.Tasks.Task.FromResult(_database.Schedules);
+                return await System.Threading.Tasks.Task.FromResult(_repository.GetAllSchedules());
             }
 
-            return await System.Threading.Tasks.Task.FromResult(_database.Schedules.Where(s => s.UserId == userId).ToList());
+            return await System.Threading.Tasks.Task.FromResult(_repository.GetSchedulesByUserId(userId));
         }
 
         public async Task<Schedule?> GetScheduleByIdAsync(Guid scheduleId, string? userId = null)
         {
-            var schedule = _database.Schedules.FirstOrDefault(s => s.ID == scheduleId);
+            var schedule = _repository.GetScheduleById(scheduleId);
 
+            // If no schedule found or user doesn't have access
             if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
             {
                 return null;
@@ -45,76 +46,103 @@ namespace ScheduleAPI.Services
                 Name = scheduleDto.Name,
                 Description = scheduleDto.Description,
                 TotalDays = scheduleDto.TotalDays,
-                UserId = userId
+                UserId = userId,
+                _schedule = new List<Model.Task>()
             };
 
-            if (scheduleDto.Tasks != null)
+            _repository.AddSchedule(schedule);
+
+            // Add tasks to the schedule if provided
+            if (scheduleDto.Tasks != null && scheduleDto.Tasks.Any())
             {
                 foreach (var taskDto in scheduleDto.Tasks)
                 {
-                    var task = await _taskService.AddTaskAsync(taskDto, userId);
-                    schedule._schedule.Add(task);
+                    await _taskService.AddTaskToScheduleAsync(taskDto, userId ?? string.Empty, schedule.ID);
                 }
             }
 
-            _database.Schedules.Add(schedule);
             return schedule;
         }
 
         public async Task<Schedule?> UpdateScheduleAsync(Guid scheduleId, ScheduleDTO scheduleDto, string? userId = null)
         {
-            var schedule = _database.Schedules.FirstOrDefault(s => s.ID == scheduleId);
+            var schedule = await GetScheduleByIdAsync(scheduleId, userId);
 
-            if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
+            if (schedule == null)
             {
                 return null;
             }
 
+            // Update basic properties
             schedule.Name = scheduleDto.Name;
             schedule.Description = scheduleDto.Description;
             schedule.TotalDays = scheduleDto.TotalDays;
 
-            // If tasks are provided, update them
+            // Update tasks if provided
             if (scheduleDto.Tasks != null)
             {
-                // Clear existing tasks and add new ones
+                // Clear existing tasks from the schedule
+                var existingTasks = new List<Model.Task>(schedule._schedule);
                 schedule._schedule.Clear();
 
+                // Process each task in the DTO
                 foreach (var taskDto in scheduleDto.Tasks)
                 {
-                    Model.Task task;
-
+                    // If task has ID, try to update it
                     if (!string.IsNullOrEmpty(taskDto.Id) && Guid.TryParse(taskDto.Id, out var taskId))
                     {
-                        // Update existing task
-                        task = await _taskService.UpdateTaskAsync(taskId, userId ?? string.Empty, taskDto)
-                               ? await _taskService.GetTaskByIdAsync(taskId, userId ?? string.Empty)
-                               : await _taskService.AddTaskAsync(taskDto, userId);
+                        var updated = await _taskService.UpdateTaskAsync(taskId, userId ?? string.Empty, taskDto);
+                        if (updated)
+                        {
+                            var task = await _taskService.GetTaskByIdAsync(taskId, userId ?? string.Empty);
+                            if (task != null)
+                            {
+                                schedule._schedule.Add(task);
+                            }
+                        }
+                        else
+                        {
+                            // If update fails, create a new task
+                            var task = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
+                            schedule._schedule.Add(task);
+                        }
                     }
                     else
                     {
-                        // Add new task
-                        task = await _taskService.AddTaskAsync(taskDto, userId);
+                        // Create new task
+                        var task = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
+                        schedule._schedule.Add(task);
                     }
+                }
 
-                    schedule._schedule.Add(task);
+                // Clean up any tasks that are no longer in the schedule
+                foreach (var removedTask in existingTasks.Where(
+                    t => !schedule._schedule.Any(st => st.Id == t.Id)))
+                {
+                    await _taskService.DeleteTaskAsync(removedTask.Id, userId ?? string.Empty);
                 }
             }
 
+            _repository.UpdateSchedule(schedule);
             return schedule;
         }
 
         public async Task<bool> DeleteScheduleAsync(Guid scheduleId, string? userId = null)
         {
-            var schedule = _database.Schedules.FirstOrDefault(s => s.ID == scheduleId);
+            var schedule = await GetScheduleByIdAsync(scheduleId, userId);
 
-            if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
+            if (schedule == null)
             {
                 return false;
             }
 
-            _database.Schedules.Remove(schedule);
-            return await System.Threading.Tasks.Task.FromResult(true);
+            // Delete all tasks in the schedule
+            foreach (var task in schedule._schedule.ToList())
+            {
+                await _taskService.DeleteTaskAsync(task.Id, userId ?? string.Empty);
+            }
+
+            return await System.Threading.Tasks.Task.FromResult(_repository.DeleteSchedule(scheduleId));
         }
     }
 }

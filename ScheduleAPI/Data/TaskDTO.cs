@@ -1,4 +1,5 @@
-﻿using static ScheduleAPI.Common.Enums;
+﻿using ScheduleAPI.Common;
+using static ScheduleAPI.Common.Enums;
 
 namespace ScheduleAPI.Data
 {
@@ -9,7 +10,7 @@ namespace ScheduleAPI.Data
         public string? Description { get; set; }
         public int DurationHours { get; set; }
         public TaskType Type { get; set; }
-        public TaskStatus? Status { get; set; }
+        public Enums.TaskProgress? Status { get; set; }
         public string? ScheduledStartTime { get; set; } // ISO format string
         public string? ScheduledEndTime { get; set; } // ISO format string
         public int? ScheduledDay { get; set; }

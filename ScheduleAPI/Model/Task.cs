@@ -10,7 +10,7 @@ namespace ScheduleAPI.Model
         public string? Description { get; set; }
         public int DurationHours { get; set; } 
         public TaskType Type { get; set; }
-        public TaskProgress? Status
+        public Enums.TaskProgress? Status
         {
             get => (TaskProgress?)Status;
             set{

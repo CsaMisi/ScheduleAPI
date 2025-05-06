@@ -1,167 +1,182 @@
 ﻿using ScheduleAPI.Data;
+using ScheduleAPI.Interfaces;
 using ScheduleAPI.Model;
 
 namespace ScheduleAPI.Services
 {
-    public class TaskService
+    public class TaskService : ITaskService
     {
-        private readonly InMemory _repository;
+        private readonly IRepository _repository;
 
-        public TaskService(InMemory repository)
+        public TaskService(IRepository repository)
         {
             _repository = repository;
         }
-        /// <summary>
-        /// All of the null handling, and not found and such, will be done at the controller level.
-        /// This is because this is a service layer, and the controller layer should handle all of the null handling and not found and such.
-        /// Returning null or empty lists is the responsibility of the service layer, while the controller layer should handle the response to the client.
-        /// That is to say, returning any http responses in this layer is dumb
-        /// </summary>
 
-        //TODO Update, Delete
-
-        //List all
-        public async Task<List<Model.Task>> GetAllTasksAsync(string? UserID)
+        public async Task<List<Model.Task>> GetAllTasksAsync(string? userId)
         {
-            if (UserID == null)
+            if (string.IsNullOrEmpty(userId))
             {
-                return await System.Threading.Tasks.Task.FromResult(_repository.Tasks);
+                return await System.Threading.Tasks.Task.FromResult(_repository.GetAllTasks());
             }
 
-            var schedules = _repository.Schedules.Where(x => x.UserId == UserID).ToList();
-            List<Guid> userTaskID = schedules.SelectMany(x => x._schedule).Select(x => x.Id).ToList();
+            // Get all schedules for the user
+            var schedules = _repository.GetSchedulesByUserId(userId);
 
-            return await System.Threading.Tasks.Task.FromResult(_repository.Tasks.Where(x => userTaskID.Contains((x.Id))).ToList());
+            // Get unique task IDs from all user schedules
+            var userTaskIds = schedules.SelectMany(s => s._schedule).Select(t => t.Id).Distinct().ToList();
+
+            // Return tasks that belong to the user
+            return await System.Threading.Tasks.Task.FromResult(_repository.GetAllTasks().Where(t => userTaskIds.Contains(t.Id)).ToList());
         }
 
-        //List the tasks of a schedule
-        public async Task<List<Model.Task>> getAllTasksByScheduleAsync
-            (string? UserID, Guid sched)
+        public async Task<List<Model.Task>> GetAllTasksByScheduleAsync(string? userId, Guid scheduleId)
         {
-            if (UserID == null)
-            {
-                return await System.Threading.Tasks.Task.FromResult(_repository.Tasks);
-                //TODO: Handle this case properly
-            }
-            var schedule = await System.Threading.Tasks.Task.FromResult
-                (_repository.Schedules.Where(x => x.UserId == UserID && x.ID == sched).ToList());
+            // Get the schedule
+            var schedule = _repository.GetScheduleById(scheduleId);
 
-            if (schedule == null)
+            // If schedule not found or user doesn't have access
+            if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
             {
-                return await System.Threading.Tasks.Task.FromResult(_repository.Tasks);
+                return new List<Model.Task>();
             }
 
-            return await System.Threading.Tasks.Task.FromResult
-                (schedule.SelectMany(x => x._schedule).ToList());
-
-        }
-        //Get task by ID
-        public async Task<Model.Task?> GetTaskByIdAsync(Guid id, string UserID)
-        {
-            var tasks = await GetAllTasksAsync(UserID);
-            if (tasks == null)
-            {
-                return null;
-            }
-            return await System.Threading.Tasks.Task.FromResult(tasks.FirstOrDefault(x => x.Id == id));
+            return await System.Threading.Tasks.Task.FromResult(schedule._schedule.ToList());
         }
 
-        //Add task to schedule
-        public async Task<bool> AddTaskAsync(TaskDTO newTaks, string userid)
+        public async Task<Model.Task?> GetTaskByIdAsync(Guid taskId, string userId)
         {
-#pragma warning disable CS8629 // Nullable value type may be null, handled at Task.cs
-            /*var task = new Model.Task
-            {
-                Id = Guid.NewGuid(),
-                Name = newTaks.Name,
-                Description = newTaks.Description,
-                DurationHours = newTaks.DurationHours,
-                Type = newTaks.Type,
-                Status = (Common.Enums.TaskProgress)newTaks.Status,
-                ScheduledStartTime = newTaks.ScheduledStartTime != null ? DateTime.Parse(newTaks.ScheduledStartTime) : null,
-                ScheduledEndTime = newTaks.ScheduledEndTime != null ? DateTime.Parse(newTaks.ScheduledEndTime) : null,
-                ScheduledDay = newTaks.ScheduledDay
-            };*/
-#pragma warning restore CS8629 // Nullable value type may be null.
-
-            var task = await CreateTaskAsync(newTaks);
-
-            // Add the task to the repository
-            _repository.Tasks.Add(task);
-
-            // Add the task to the user's schedule
-            var schedule = _repository.Schedules.FirstOrDefault(x => x.UserId == userid);
-            if (schedule != null)
-            {
-                schedule._schedule.Add(task);
-            }
-            else
-            {
-                // If the user doesn't have a schedule, create one
-                var newSchedule = new Schedule
-                {
-                    // TODO: Use ScheduleService to create a new schedule, and prompt for name
-                    UserId = userid,
-                    _schedule = new List<Model.Task> { task }
-                };
-                _repository.Schedules.Add(newSchedule);
-            }
-
-            return true;
-        }
-        //Dekete task from schedule and repository
-        public async Task<bool> DeleteTaskAsync(Guid id, string UserID)
-        {
-            var task = await GetTaskByIdAsync(id, UserID);
-            if (task == null)
-            {
-                return false;
-            }
-            _repository.Tasks.Remove(task);
-            var schedule = _repository.Schedules.FirstOrDefault(x => x.UserId == UserID);
-            if (schedule != null)
-            {
-                schedule._schedule.Remove(task);
-            }
-            return true;
-        }
-        //Update task in schedule and repository
-        public async Task<bool> UpdateTaskAsync(Guid id, string UserID, TaskDTO updatedTask)
-        {
-            var task = await GetTaskByIdAsync(id, UserID);
-            if (task == null)
-            {
-                return false;
-            }
-
-            var newTask = CreateTaskAsync(updatedTask);
-
-            var index = _repository.Tasks.FindIndex(x => x.Id == task.Id);
-            if (index != -1)
-            {
-                _repository.Tasks[index] = await newTask;
-                return true;
-            }
-            return false;
-
+            var tasks = await GetAllTasksAsync(userId);
+            return tasks.FirstOrDefault(t => t.Id == taskId);
         }
 
-
-        private async Task<Model.Task> CreateTaskAsync(TaskDTO newTask)
+        public async Task<Model.Task> CreateTaskAsync(TaskDTO taskDto, string userId)
         {
             var task = new Model.Task
             {
-                Id = Guid.NewGuid(),
-                Name = newTask.Name,
-                Description = newTask.Description,
-                DurationHours = newTask.DurationHours,
-                Type = newTask.Type,
-                Status = (Common.Enums.TaskProgress)newTask.Status,
-                ScheduledStartTime = newTask.ScheduledStartTime != null ? DateTime.Parse(newTask.ScheduledStartTime) : null,
-                ScheduledEndTime = newTask.ScheduledEndTime != null ? DateTime.Parse(newTask.ScheduledEndTime) : null,
-                ScheduledDay = newTask.ScheduledDay
+                Id = !string.IsNullOrEmpty(taskDto.Id) && Guid.TryParse(taskDto.Id, out var id) ? id : Guid.NewGuid(),
+                Name = taskDto.Name,
+                Description = taskDto.Description,
+                DurationHours = taskDto.DurationHours,
+                Type = taskDto.Type,
+                Status = taskDto.Status,
+                ScheduledStartTime = !string.IsNullOrEmpty(taskDto.ScheduledStartTime) ?
+                    DateTime.Parse(taskDto.ScheduledStartTime) : null,
+                ScheduledEndTime = !string.IsNullOrEmpty(taskDto.ScheduledEndTime) ?
+                    DateTime.Parse(taskDto.ScheduledEndTime) : null,
+                ScheduledDay = taskDto.ScheduledDay
             };
+
+            _repository.AddTask(task);
             return await System.Threading.Tasks.Task.FromResult(task);
+        }
+
+        public async Task<bool> AddTaskToScheduleAsync(TaskDTO taskDto, string userId, Guid? scheduleId = null)
+        {
+            // Create the task first
+            var task = await CreateTaskAsync(taskDto, userId);
+
+            // Find the target schedule
+            Schedule? schedule;
+
+            if (scheduleId.HasValue)
+            {
+                schedule = _repository.GetScheduleById(scheduleId.Value);
+
+                // Verify the schedule exists and belongs to the user
+                if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // Get the first schedule belonging to the user, or create one if none exists
+                schedule = _repository.GetSchedulesByUserId(userId).FirstOrDefault();
+
+                if (schedule == null)
+                {
+                    // Create a default schedule for the user
+                    schedule = new Schedule
+                    {
+                        Name = "Default Schedule",
+                        Description = "Default schedule created automatically",
+                        UserId = userId,
+                        _schedule = new List<Model.Task>()
+                    };
+
+                    _repository.AddSchedule(schedule);
+                }
+            }
+
+            // Add the task to the schedule
+            schedule._schedule.Add(task);
+            return true;
+        }
+
+        public async Task<bool> DeleteTaskAsync(Guid taskId, string userId)
+        {
+            // Verify the task exists and belongs to the user
+            var task = await GetTaskByIdAsync(taskId, userId);
+            if (task == null)
+            {
+                return false;
+            }
+
+            // Remove the task from all schedules it might be in
+            var userSchedules = _repository.GetSchedulesByUserId(userId);
+            foreach (var schedule in userSchedules)
+            {
+                schedule._schedule.RemoveAll(t => t.Id == taskId);
+            }
+
+            // Delete the task from the repository
+            return await System.Threading.Tasks.Task.FromResult(_repository.DeleteTask(taskId));
+        }
+
+        public async Task<bool> UpdateTaskAsync(Guid taskId, string userId, TaskDTO taskDto)
+        {
+            // Verify the task exists and belongs to the user
+            var existingTask = await GetTaskByIdAsync(taskId, userId);
+            if (existingTask == null)
+            {
+                return false;
+            }
+
+            // Update task properties
+            var updatedTask = new Model.Task
+            {
+                Id = taskId,
+                Name = taskDto.Name,
+                Description = taskDto.Description,
+                DurationHours = taskDto.DurationHours,
+                Type = taskDto.Type,
+                Status = taskDto.Status,
+                ScheduledStartTime = !string.IsNullOrEmpty(taskDto.ScheduledStartTime) ?
+                    DateTime.Parse(taskDto.ScheduledStartTime) : null,
+                ScheduledEndTime = !string.IsNullOrEmpty(taskDto.ScheduledEndTime) ?
+                    DateTime.Parse(taskDto.ScheduledEndTime) : null,
+                ScheduledDay = taskDto.ScheduledDay
+            };
+
+            // Update the task in the repository
+            var updated = _repository.UpdateTask(updatedTask);
+
+            if (updated)
+            {
+                // Update references in all schedules
+                var userSchedules = _repository.GetSchedulesByUserId(userId);
+                foreach (var schedule in userSchedules)
+                {
+                    var index = schedule._schedule.FindIndex(t => t.Id == taskId);
+                    if (index >= 0)
+                    {
+                        schedule._schedule[index] = updatedTask;
+                    }
+                }
+            }
+
+            return await System.Threading.Tasks.Task.FromResult(updated);
         }
     }
 }
