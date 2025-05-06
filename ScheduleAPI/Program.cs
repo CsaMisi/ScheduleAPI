@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using ScheduleAPI.Data;
+using ScheduleAPI.Interfaces;
 using ScheduleAPI.Middleware;
 using ScheduleAPI.Services;
 
@@ -51,16 +52,18 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSingleton<InMemory>();
-builder.Services.AddScoped<TaskService>();
-builder.Services.AddScoped<ScheduleService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ScheduleGenerationService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IRepository, InMemory>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 
 // Note: For Configur JWT Authentication
 builder.Configuration.AddJsonFile("appsettings.json", optional: false);
 
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
