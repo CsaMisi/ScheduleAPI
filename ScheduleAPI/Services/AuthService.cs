@@ -12,13 +12,17 @@ namespace ScheduleAPI.Services
     {
         private readonly InMemory _database;
         private readonly string _jwtSecret;
-        private readonly int _jwtExpirationMinutes;
+        private readonly string _jwtIssuer; 
+        private readonly string _jwtAudience; 
+
 
         public AuthService(InMemory database, IConfiguration configuration)
         {
             _database = database;
-            _jwtSecret = configuration["Jwt:Secret"] ?? "defaultveryverysecretkeythatshouldbeatleast32chars";
-            _jwtExpirationMinutes = int.Parse(configuration["Jwt:ExpirationMinutes"] ?? "60");
+            // Fallback values are okay here, but ensure they match appsettings if possible
+            _jwtSecret = configuration["Jwt:Secret"] ?? "thisthinghastobe32longsoheresthe";
+            _jwtIssuer = configuration["Jwt:Issuer"] ?? "ScheduleAPI";
+            _jwtAudience = configuration["Jwt:Audience"] ?? "ScheduleClient"; 
         }
 
         public async Task<User?> RegisterUserAsync(RegisterUserDTO registerDto)
@@ -55,13 +59,11 @@ namespace ScheduleAPI.Services
 
             // Generate JWT token
             var token = GenerateJwtToken(user);
-            var expires = DateTime.UtcNow.AddMinutes(_jwtExpirationMinutes);
 
             return await System.Threading.Tasks.Task.FromResult(new AuthResponseDTO
             {
                 Token = token,
-                Username = user.Username,
-                ExpiresAt = expires
+                Username = user.Username
             });
         }
 
@@ -106,9 +108,11 @@ namespace ScheduleAPI.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Name, user.Username)
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(JwtRegisteredClaimNames.Iss, _jwtIssuer),
+                    new Claim(JwtRegisteredClaimNames.Aud, _jwtAudience)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(_jwtExpirationMinutes),
+                Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature

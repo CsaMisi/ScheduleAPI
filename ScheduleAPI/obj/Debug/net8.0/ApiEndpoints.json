@@ -168,7 +168,7 @@
     "ContainingType": "ScheduleAPI.Controllers.TaskController",
     "Method": "GetAllTasks",
     "RelativePath": "api/Task",
-    "HttpMethod": "",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
