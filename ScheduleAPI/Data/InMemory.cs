@@ -9,6 +9,8 @@ namespace ScheduleAPI.Data
         public List<Schedule> Schedules { get; } = new List<Schedule>();
         public List<Model.Task> Tasks { get; } = new List<Model.Task>();
 
+        public List<User>  Users { get; } = new List<User>();
+
         public List<Schedule> GetAllSchedules()
         {
             return Schedules;
