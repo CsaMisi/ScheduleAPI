@@ -19,6 +19,7 @@ namespace ScheduleAPI.Controllers
         }
 
         // GET: api/task
+        [HttpGet]
         public async Task<IActionResult> GetAllTasks()
         {
             var userId = HttpContext.Items["UserId"]?.ToString();
