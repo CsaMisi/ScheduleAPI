@@ -8,7 +8,7 @@ namespace ScheduleAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class TaskController : ControllerBase
     {
         private readonly TaskService _taskService;
