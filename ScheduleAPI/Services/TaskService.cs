@@ -52,20 +52,29 @@ namespace ScheduleAPI.Services
 
         public async Task<Model.Task> CreateTaskAsync(TaskDTO taskDto, string userId)
         {
-            var task = new Model.Task
+            var task = (Model.Task)null;
+            try
             {
-                Id = !string.IsNullOrEmpty(taskDto.Id) && Guid.TryParse(taskDto.Id, out var id) ? id : Guid.NewGuid(),
-                Name = taskDto.Name,
-                Description = taskDto.Description,
-                DurationHours = taskDto.DurationHours,
-                Type = taskDto.Type,
-                Status = taskDto.Status,
-                ScheduledStartTime = !string.IsNullOrEmpty(taskDto.ScheduledStartTime) ?
-                    DateTime.Parse(taskDto.ScheduledStartTime) : null,
-                ScheduledEndTime = !string.IsNullOrEmpty(taskDto.ScheduledEndTime) ?
-                    DateTime.Parse(taskDto.ScheduledEndTime) : null,
-                ScheduledDay = taskDto.ScheduledDay
-            };
+                task = new Model.Task
+                {
+                    Id = !string.IsNullOrEmpty(taskDto.Id) && Guid.TryParse(taskDto.Id, out var id) ? id : Guid.NewGuid(),
+                    Name = taskDto.Name,
+                    Description = taskDto.Description,
+                    DurationHours = taskDto.DurationHours,
+                    Type = taskDto.Type,
+                    Status = taskDto.Status,
+                    ScheduledStartTime = !string.IsNullOrEmpty(taskDto.ScheduledStartTime) ?
+                        DateTime.Parse(taskDto.ScheduledStartTime) : null,
+                    ScheduledEndTime = !string.IsNullOrEmpty(taskDto.ScheduledEndTime) ?
+                        DateTime.Parse(taskDto.ScheduledEndTime) : null,
+                    ScheduledDay = taskDto.ScheduledDay
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                throw;
+            }
 
             _repository.AddTask(task);
             return await System.Threading.Tasks.Task.FromResult(task);

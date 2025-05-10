@@ -9,8 +9,7 @@ namespace ScheduleAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
-    //[Authorize]
+    [AllowAnonymous] // This ensures the endpoints are accessible without authentication
     public class TaskController : ControllerBase
     {
         private readonly TaskService _taskService;
@@ -24,7 +23,7 @@ namespace ScheduleAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllTasks()
         {
-            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
+            var userId = "01"; // Fixed user ID for testing without authentication
             var tasks = await _taskService.GetAllTasksAsync(userId);
             return Ok(tasks);
         }
@@ -32,7 +31,7 @@ namespace ScheduleAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTask(Guid id)
         {
-            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
+            var userId = "01"; // Fixed user ID for testing without authentication
             var task = await _taskService.GetTaskByIdAsync(id, userId);
             if (task == null)
                 return NotFound("Task not found or you do not have access to it.");
@@ -44,7 +43,7 @@ namespace ScheduleAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
+            var userId = "01"; // Fixed user ID for testing without authentication
             var task = await _taskService.CreateTaskAsync(taskDto, userId);
             return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
         }
@@ -54,7 +53,7 @@ namespace ScheduleAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
+            var userId = "01"; // Fixed user ID for testing without authentication
             var task = await _taskService.UpdateTaskAsync(id, userId, taskDto);
             if (task == null)
                 return NotFound("Task not found or you do not have access to it.");
@@ -64,7 +63,7 @@ namespace ScheduleAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(Guid id)
         {
-            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
+            var userId = "01"; // Fixed user ID for testing without authentication
             var result = await _taskService.DeleteTaskAsync(id, userId);
             if (!result)
                 return NotFound("Task not found or you do not have access to it.");

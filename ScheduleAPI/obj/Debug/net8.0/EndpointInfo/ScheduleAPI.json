@@ -5,7 +5,7 @@
     "version": "v1"
   },
   "paths": {
-    "/register": {
+    "/api/Auth/register": {
       "post": {
         "tags": [
           "Auth"
@@ -31,7 +31,24 @@
         },
         "responses": {
           "400": {
-            "description": "Bad Request"
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "200": {
             "description": "OK"
@@ -39,7 +56,7 @@
         }
       }
     },
-    "/login": {
+    "/api/Auth/login": {
       "post": {
         "tags": [
           "Auth"
@@ -65,10 +82,44 @@
         },
         "responses": {
           "400": {
-            "description": "Bad Request"
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "200": {
             "description": "OK"

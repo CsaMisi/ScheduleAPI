@@ -1,15 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.TagHelpers.Cache;
 using ScheduleAPI.Data;
 using ScheduleAPI.Services;
 
 namespace ScheduleAPI.Controllers
 {
-    //[Route("api/[controller]")]
-    //[ApiController]
-    //[Authorize]
+    [Route("api/[controller]")]
+    [ApiController]
+    // [Authorize] - Commented out to allow access without authentication
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -24,12 +23,12 @@ namespace ScheduleAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> Register([FromBody] RegisterUserDTO registerDTO)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var user = await _authService.RegisterUserAsync(registerDTO);
 
-            if(user == null) 
+            if (user == null)
                 return BadRequest("Username already exists");
 
             return Ok("Registration Successful");

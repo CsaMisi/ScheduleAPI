@@ -97,7 +97,7 @@ namespace ScheduleAPI.Services
             if (dayEndHour < 0 || dayEndHour > 23)
                 throw new ArgumentException("Day end hour must be between 0 and 23", nameof(dayEndHour));
 
-            if (dayStartHour >= dayEndHour)
+            if (dayStartHour > dayEndHour)
                 throw new ArgumentException("Day start hour must be before day end hour");
 
             if (minRestHours < 0 || minRestHours > (dayEndHour - dayStartHour))

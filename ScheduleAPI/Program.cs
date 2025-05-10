@@ -9,18 +9,17 @@ using ScheduleAPI.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Schedule API", Version = "v1" });
 
-    // Add JWT Authentication
-    /*c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    // JWT Authentication setup is kept but commented out
+    /*
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        /*Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -40,9 +39,11 @@ builder.Services.AddSwaggerGen(c =>
             },
             Array.Empty<string>()
         }
-    });*/
+    });
+    */
 });
 
+// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -53,11 +54,11 @@ builder.Services.AddCors(options =>
     });
 });
 
+// JWT Authentication is kept but commented out
+/*
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 
-//var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>(); // **Changed to match "Jwt" section**
-
-// Add Authentication
-/*builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -75,45 +76,46 @@ builder.Services.AddCors(options =>
         ValidateLifetime = true, 
         ClockSkew = TimeSpan.Zero 
     };
+});
+*/
 
-});*/
-
-
-
+// Register services
 builder.Services.AddSingleton<IRepository, InMemory>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<IScheduleGenerationService, ScheduleGenerationService>();
-
-
+builder.Services.AddScoped<ScheduleGenerationService>();
+//builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage(); 
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors();
 
-
-//app.UseAuthentication(); 
-
-//app.UseAuthorization(); //Note: Bearer [token]
+// Authentication and Authorization middleware are commented out
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
 
-/*public class JwtSettings
+// JwtSettings class is kept for reference
+/*
+public class JwtSettings
 {
     public string Secret { get; set; }
     public string Issuer { get; set; }
     public string Audience { get; set; }
-}*/
+}
+*/
