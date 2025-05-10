@@ -7,8 +7,8 @@ using ScheduleAPI.Services;
 
 namespace ScheduleAPI.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    //[Route("api/[controller]")]
+    //[ApiController]
     //[Authorize]
     public class AuthController : ControllerBase
     {

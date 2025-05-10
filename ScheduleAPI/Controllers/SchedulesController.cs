@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ScheduleAPI.Data;
 using ScheduleAPI.Services;
+using System.Security.Cryptography;
 
 namespace ScheduleAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
+    [AllowAnonymous]
     public class SchedulesController : ControllerBase
     {
         private readonly ScheduleService _scheduleService;
@@ -25,7 +27,7 @@ namespace ScheduleAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllSchedules()
         {
-            var userId = HttpContext.Items["UserId"]?.ToString();
+            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
             var schedules = await _scheduleService.GetAllSchedulesAsync(userId);
             return Ok(schedules);
         }
@@ -35,7 +37,7 @@ namespace ScheduleAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetScheduleById(Guid id)
         {
-            var userId = HttpContext.Items["UserId"]?.ToString();
+            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
             var schedule = await _scheduleService.GetScheduleByIdAsync(id, userId);
             if (schedule == null)
                 return NotFound("Schedule not found or you do not have access to it.");
@@ -47,7 +49,7 @@ namespace ScheduleAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var userId = HttpContext.Items["UserId"]?.ToString();
+            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
             var schedule = await _generationService.GenerateScheduleAsync(generateDto, userId);
 
             if (schedule == null)
@@ -61,7 +63,7 @@ namespace ScheduleAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var userId = HttpContext.Items["UserId"]?.ToString();
+            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
             var schedule = await _scheduleService.UpdateScheduleAsync(id, scheduleDto, userId);
             if (schedule == null)
                 return NotFound("Schedule not found or you do not have access to it.");
@@ -71,7 +73,7 @@ namespace ScheduleAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSchedule(Guid id)
         {
-            var userId = HttpContext.Items["UserId"]?.ToString();
+            var userId = "01";//HttpContext.Items["UserId"]?.ToString(); Did not have time to properly implement authentication
             var schedule = await _scheduleService.DeleteScheduleAsync(id, userId);
             if (!schedule)
                 return NotFound("Schedule not found or you do not have access to it.");

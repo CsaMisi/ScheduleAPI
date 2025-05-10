@@ -18,9 +18,9 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Schedule API", Version = "v1" });
 
     // Add JWT Authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    /*c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        /*Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -40,7 +40,7 @@ builder.Services.AddSwaggerGen(c =>
             },
             Array.Empty<string>()
         }
-    });
+    });*/
 });
 
 builder.Services.AddCors(options =>
@@ -54,10 +54,10 @@ builder.Services.AddCors(options =>
 });
 
 
-var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>(); // **Changed to match "Jwt" section**
+//var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>(); // **Changed to match "Jwt" section**
 
 // Add Authentication
-builder.Services.AddAuthentication(options =>
+/*builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -76,16 +76,14 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero 
     };
 
-});
+});*/
 
 
 
-builder.Services.AddSingleton<InMemory>();
+builder.Services.AddSingleton<IRepository, InMemory>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
-builder.Services.AddScoped<ScheduleGenerationService>();
-builder.Services.AddScoped<AuthService>(); 
-builder.Services.AddScoped<IRepository, InMemory>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IScheduleGenerationService, ScheduleGenerationService>();
 
 
 
@@ -105,17 +103,17 @@ app.UseHttpsRedirection();
 app.UseCors();
 
 
-app.UseAuthentication(); 
+//app.UseAuthentication(); 
 
-app.UseAuthorization(); //Note: Bearer [token]
+//app.UseAuthorization(); //Note: Bearer [token]
 
 app.MapControllers();
 
 app.Run();
 
-public class JwtSettings
+/*public class JwtSettings
 {
     public string Secret { get; set; }
     public string Issuer { get; set; }
     public string Audience { get; set; }
-}
+}*/
