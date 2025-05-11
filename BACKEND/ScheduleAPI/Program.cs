@@ -104,8 +104,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseCors();
+app.UseHttpsRedirection();
 
 // Authentication and Authorization middleware are commented out
 // app.UseAuthentication();

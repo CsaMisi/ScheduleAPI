@@ -1,94 +1,99 @@
-.hidden {
-    display: none;
-}
-.navbar-brand {
-    font-weight: bold;
-}
-.task-card {
-    margin-bottom: 15px;
-    transition: all 0.3s;
-}
-.task-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.schedule-card {
-    cursor: pointer;
-    transition: all 0.3s;
-}
-.schedule-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.schedule-action-buttons {
-    position: absolute;
-    right: 15px;
-    top: 15px;
-}
-.btn-circle {
-    width: 35px;
-    height: 35px;
-    padding: 6px 0;
-    border-radius: 50%;
-    text-align: center;
-    font-size: 12px;
-    line-height: 1.428571429;
-}
-#schedule-details {
-    transition: all 0.5s;
-}
-.loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
+/* Custom styles for the Tevékenység Menedzser application */
+
+/* Task list items */
+.task-item {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    z-index: 9999;
 }
 
-.loading.hidden {
-    display: none !important;
+.task-item button {
+    margin-left: 10px;
 }
 
-.loading-spinner {
-    width: 3rem;
-    height: 3rem;
-}
-.task-status-not-started { background-color: #f8f9fa; }
-.task-status-in-progress { background-color: #e7f5ff; }
-.task-status-completed { background-color: #d8f5d8; }
-.task-status-on-hold { background-color: #fff3cd; }
-.task-status-cancelled { background-color: #f8d7da; }
-
-.task-type-physical { border-left: 4px solid #0d6efd; }
-.task-type-mental { border-left: 4px solid #6f42c1; }
-.task-type-freetime { border-left: 4px solid #20c997; }
-.task-type-work { border-left: 4px solid #fd7e14; }
-.task-type-study { border-left: 4px solid #6c757d; }
-.task-type-other { border-left: 4px solid #dc3545; }
-
-.type-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 5px;
-}
-.day-separator {
-    background-color: #f8f9fa;
-    padding: 5px 10px;
+/* Schedule table styles */
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
     margin-top: 20px;
-    margin-bottom: 10px;
-    border-radius: 5px;
+}
+
+.schedule-table th,
+.schedule-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: center;
+}
+
+.schedule-table th {
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+}
+
+.schedule-table .time-column {
+    width: 100px;
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.schedule-table .hour-row {
+    height: 60px;
+}
+
+/* Task color styles based on type */
+.task-type-0 {
+    background-color: #d4edda; /* Physical - Green */
+}
+
+.task-type-1 {
+    background-color: #cce5ff; /* Mental - Blue */
+}
+
+.task-type-2 {
+    background-color: #fff3cd; /* Free Time - Yellow */
+}
+
+.task-type-3 {
+    background-color: #f8d7da; /* Work - Red */
+}
+
+.task-type-4 {
+    background-color: #e2e3e5; /* Study - Gray */
+}
+
+.task-type-5 {
+    background-color: #d1ecf1; /* Other - Teal */
+}
+
+/* Task display in the schedule */
+.task-cell {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.task-cell .task-name {
     font-weight: bold;
 }
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1050;
+
+.task-cell .task-duration {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.empty-cell {
+    background-color: #ffffff;
+}
+
+/* Schedule navigation controls */
+.schedule-nav {
+    margin: 15px 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.page-info {
+    font-weight: bold;
+    padding: 0 15px;
 }
