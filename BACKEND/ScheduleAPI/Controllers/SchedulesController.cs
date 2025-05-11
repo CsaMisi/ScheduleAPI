@@ -63,12 +63,20 @@ namespace ScheduleAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var userId = "01"; // Fixed user ID for testing without authentication
-            var schedule = await _scheduleService.AddTaskToScheduleAsync(id, taskDto);
-            if(schedule == false)
-                return NotFound("Schedule not found or you do not have access to it.");
-            return NoContent();
 
+            var userId = "01"; // Fixed user ID for testing without authentication
+
+            // Log incoming data
+            Console.WriteLine($"Adding task to schedule {id}: {taskDto.Name}");
+
+            var success = await _scheduleService.AddTaskToScheduleAsync(id, taskDto);
+
+            if (!success)
+                return NotFound("Schedule not found or you do not have access to it.");
+
+            // Return the updated schedule instead of NoContent()
+            var updatedSchedule = await _scheduleService.GetScheduleByIdAsync(id, userId);
+            return Ok(updatedSchedule);
         }
 
         [HttpPut("{id}")]

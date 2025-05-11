@@ -165,9 +165,23 @@ export const api = {
         throw new Error('Schedule ID is required to create a task');
     }
     
-    // Use the dedicated endpoint for adding tasks to a schedule
-    return this.request(`Schedules/${scheduleId}/add-to-schedule`, 'POST', taskData);
-    },
+    console.log('Creating task with scheduleId:', scheduleId);
+    
+    // Remove scheduleId from taskData since it's in the URL already
+    const { scheduleId: _, ...taskDataToSend } = taskData;
+    
+    console.log('Task data being sent to API:', taskDataToSend);
+    
+    try {
+        // Use the dedicated endpoint for adding tasks to a schedule
+        const result = await this.request(`Schedules/${scheduleId}/add-to-schedule`, 'POST', taskDataToSend);
+        console.log('API response for task creation:', result);
+        return result;
+    } catch (error) {
+        console.error('API error in createTask:', error);
+        throw error;
+    }
+},
 
     async updateTask(id, taskData) {
         // API readme suggests PUT /api/Task/{id}

@@ -24,7 +24,7 @@ namespace ScheduleAPI.Services
             var schedules = _repository.GetSchedulesByUserId(userId);
 
             // Get unique task IDs from all user schedules
-            var userTaskIds = schedules.SelectMany(s => s._schedule).Select(t => t.Id).Distinct().ToList();
+            var userTaskIds = schedules.SelectMany(s => s.schedule).Select(t => t.Id).Distinct().ToList();
 
             // Return tasks that belong to the user
             return await System.Threading.Tasks.Task.FromResult(_repository.GetAllTasks().Where(t => userTaskIds.Contains(t.Id)).ToList());
@@ -41,7 +41,7 @@ namespace ScheduleAPI.Services
                 return new List<Model.Task>();
             }
 
-            return await System.Threading.Tasks.Task.FromResult(schedule._schedule.ToList());
+            return await System.Threading.Tasks.Task.FromResult(schedule.schedule.ToList());
         }
 
         public async Task<Model.Task?> GetTaskByIdAsync(Guid taskId, string userId)
@@ -111,7 +111,7 @@ namespace ScheduleAPI.Services
                         Name = "Default Schedule",
                         Description = "Default schedule created automatically",
                         UserId = userId,
-                        _schedule = new List<Model.Task>()
+                        schedule = new List<Model.Task>()
                     };
 
                     _repository.AddSchedule(schedule);
@@ -119,7 +119,7 @@ namespace ScheduleAPI.Services
             }
 
             // Add the task to the schedule
-            schedule._schedule.Add(task);
+            schedule.schedule.Add(task);
             return true;
         }
 
@@ -136,7 +136,7 @@ namespace ScheduleAPI.Services
             var userSchedules = _repository.GetSchedulesByUserId(userId);
             foreach (var schedule in userSchedules)
             {
-                schedule._schedule.RemoveAll(t => t.Id == taskId);
+                schedule.schedule.RemoveAll(t => t.Id == taskId);
             }
 
             // Delete the task from the repository
@@ -177,10 +177,10 @@ namespace ScheduleAPI.Services
                 var userSchedules = _repository.GetSchedulesByUserId(userId);
                 foreach (var schedule in userSchedules)
                 {
-                    var index = schedule._schedule.FindIndex(t => t.Id == taskId);
+                    var index = schedule.schedule.FindIndex(t => t.Id == taskId);
                     if (index >= 0)
                     {
-                        schedule._schedule[index] = updatedTask;
+                        schedule.schedule[index] = updatedTask;
                     }
                 }
             }

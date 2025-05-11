@@ -21,8 +21,7 @@ namespace ScheduleAPI.Interfaces
         /// <param name="scheduleId">Schedule ID</param>
         /// <param name="userId">Optional user ID for authorization</param>
         /// <returns>Schedule if found, null otherwise</returns>
-        Task<Schedule?> GetScheduleByIdAsync(Guid scheduleId, string? userId = null);
-
+        Task<ScheduleDTO?> GetScheduleByIdAsync(Guid scheduleId, string? userId = null);
         /// <summary>
         /// Create a new schedule
         /// </summary>

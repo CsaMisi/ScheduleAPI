@@ -26,7 +26,7 @@ namespace ScheduleAPI.Services
             return await System.Threading.Tasks.Task.FromResult(_repository.GetSchedulesByUserId(userId));
         }
 
-        public async Task<Schedule?> GetScheduleByIdAsync(Guid scheduleId, string? userId = null)
+        public async Task<ScheduleDTO?> GetScheduleByIdAsync(Guid scheduleId, string? userId = null)
         {
             var schedule = _repository.GetScheduleById(scheduleId);
 
@@ -36,7 +36,7 @@ namespace ScheduleAPI.Services
                 return null;
             }
 
-            return await System.Threading.Tasks.Task.FromResult(schedule);
+            return await System.Threading.Tasks.Task.FromResult(MapToDTO(schedule));
         }
 
         public async Task<Schedule> CreateScheduleAsync(ScheduleDTO scheduleDto, string? userId = null)
@@ -47,7 +47,7 @@ namespace ScheduleAPI.Services
                 Description = scheduleDto.Description,
                 TotalDays = scheduleDto.TotalDays,
                 UserId = userId,
-                _schedule = new List<Model.Task>()
+                schedule = new List<Model.Task>()
             };
 
             _repository.AddSchedule(schedule);
@@ -82,8 +82,8 @@ namespace ScheduleAPI.Services
             if (scheduleDto.Tasks != null)
             {
                 // Clear existing tasks from the schedule
-                var existingTasks = new List<Model.Task>(schedule._schedule);
-                schedule._schedule.Clear();
+                var existingTasks = new List<Model.Task>(schedule.);
+                schedule.schedule.Clear();
 
                 // Process each task in the DTO
                 foreach (var taskDto in scheduleDto.Tasks)
@@ -97,27 +97,27 @@ namespace ScheduleAPI.Services
                             var task = await _taskService.GetTaskByIdAsync(taskId, userId ?? string.Empty);
                             if (task != null)
                             {
-                                schedule._schedule.Add(task);
+                                schedule.schedule.Add(task);
                             }
                         }
                         else
                         {
                             // If update fails, create a new task
                             var task = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
-                            schedule._schedule.Add(task);
+                            schedule.schedule.Add(task);
                         }
                     }
                     else
                     {
                         // Create new task
                         var task = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
-                        schedule._schedule.Add(task);
+                        schedule.schedule.Add(task);
                     }
                 }
 
                 // Clean up any tasks that are no longer in the schedule
                 foreach (var removedTask in existingTasks.Where(
-                    t => !schedule._schedule.Any(st => st.Id == t.Id)))
+                    t => !schedule.schedule.Any(st => st.Id == t.Id)))
                 {
                     await _taskService.DeleteTaskAsync(removedTask.Id, userId ?? string.Empty);
                 }
@@ -135,7 +135,7 @@ namespace ScheduleAPI.Services
                 return false;
             }
             var newTask = await _taskService.CreateTaskAsync(task, userId ?? string.Empty);
-            schedule._schedule.Add(newTask);
+            schedule.schedule.Add(newTask);
             return await System.Threading.Tasks.Task.FromResult(_repository.UpdateSchedule(schedule));
         }
 
@@ -149,12 +149,35 @@ namespace ScheduleAPI.Services
             }
 
             // Delete all tasks in the schedule
-            foreach (var task in schedule._schedule.ToList())
+            foreach (var task in schedule.schedule.ToList())
             {
                 await _taskService.DeleteTaskAsync(task.Id, userId ?? string.Empty);
             }
 
             return await System.Threading.Tasks.Task.FromResult(_repository.DeleteSchedule(scheduleId));
+        }
+
+        private ScheduleDTO MapToDTO(Schedule schedule)
+        {
+            return new ScheduleDTO
+            {
+                Id = schedule.ID.ToString(),
+                Name = schedule.Name,
+                Description = schedule.Description,
+                TotalDays = schedule.TotalDays,
+                Tasks = schedule.schedule.Select(t => new TaskDTO
+                {
+                    Id = t.Id.ToString(),
+                    Name = t.Name,
+                    Description = t.Description,
+                    DurationHours = t.DurationHours,
+                    Type = t.Type,
+                    Status = t.Status,
+                    ScheduledDay = t.ScheduledDay,
+                    ScheduledStartTime = t.ScheduledStartTime?.ToString("o"),
+                    ScheduledEndTime = t.ScheduledEndTime?.ToString("o")
+                }).ToList()
+            };
         }
     }
 }
