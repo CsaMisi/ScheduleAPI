@@ -1,4 +1,5 @@
 ﻿using ScheduleAPI.Common;
+using System.Text.Json.Serialization;
 
 namespace ScheduleAPI.Model
 {
@@ -9,7 +10,8 @@ namespace ScheduleAPI.Model
         public string? Description { get; set; }
         public int TotalDays { get; set; }
         public int TotalHours { get; set; }
-        public List<Task> _schedule = new List<Task>();
+        [JsonPropertyName("tasks")]
+        public List<Task> schedule { get; set; } = new List<Task>();
         public string? UserId = "01"; //Didint have time to properly implement in FRONTEND
     }
 }

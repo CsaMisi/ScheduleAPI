@@ -97,7 +97,7 @@ namespace ScheduleAPI.Data
 
             if (schedule != null && task != null)
             {
-                schedule._schedule.Add(task);
+                schedule.schedule.Add(task);
                 return true;
             }
             return false;
@@ -110,7 +110,7 @@ namespace ScheduleAPI.Data
 
             if (schedule != null && task != null)
             {
-                return schedule._schedule.Remove(task);
+                return schedule.schedule.Remove(task);
             }
             return false;
         }

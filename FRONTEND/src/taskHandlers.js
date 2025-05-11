@@ -64,15 +64,15 @@ export const taskHandlers = {
         }
 
         const taskData = {
-            name: document.getElementById('task-name').value,
             description: document.getElementById('task-description').value,
+            name: document.getElementById('task-name').value,
             type: parseInt(document.getElementById('task-type').value),
             status: parseInt(document.getElementById('task-status').value),
             durationHours: parseFloat(document.getElementById('task-duration').value),
-            scheduleId: appState.currentSchedule.id, // Associate task with the current schedule
-            day: document.getElementById('task-day').value ? parseInt(document.getElementById('task-day').value) : null, // Allow null day
-            startTime: document.getElementById('task-start-time').value || null, // Allow null start time
-            endTime: document.getElementById('task-end-time').value || null // Allow null end time
+            scheduleId: appState.currentSchedule.id, // This will be extracted in the API call
+            scheduledDay: document.getElementById('task-day').value ? parseInt(document.getElementById('task-day').value) : null,
+            scheduledStartTime: document.getElementById('task-start-time').value || null,
+            scheduledEndTime: document.getElementById('task-end-time').value || null
         };
 
         try {
