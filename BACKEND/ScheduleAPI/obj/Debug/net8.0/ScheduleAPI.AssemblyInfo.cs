@@ -14,7 +14,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ScheduleAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+<<<<<<< HEAD
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7bc34e879502a2d39db080fe2c0f31944276b7f6")]
+=======
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+70ce4ad1c8798afea86cad1a51acaeab9089da35")]
+>>>>>>> parent of 7bc34e8 (still attempting a fix)
 [assembly: System.Reflection.AssemblyProductAttribute("ScheduleAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ScheduleAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

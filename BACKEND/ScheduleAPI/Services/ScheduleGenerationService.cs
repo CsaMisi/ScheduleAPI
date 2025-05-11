@@ -82,8 +82,8 @@ namespace ScheduleAPI.Services
 
             await _scheduleService.UpdateScheduleAsync(schedule.ID, updatedScheduleDto, userId);
 
-            var scheduleDTO = await _scheduleService.GetScheduleByIdAsync(schedule.ID, userId);
-            return schedule;
+            // Return the updated schedule
+            return await _scheduleService.GetScheduleByIdAsync(schedule.ID, userId) ?? schedule;
         }
 
         /// <summary>

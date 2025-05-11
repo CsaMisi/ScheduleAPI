@@ -446,47 +446,47 @@
     "schemas": {
       "GenerateScheduleDTO": {
         "required": [
-          "Name",
-          "Tasks",
-          "TotalDays"
+          "name",
+          "tasks",
+          "totalDays"
         ],
         "type": "object",
         "properties": {
-          "Name": {
+          "name": {
             "minLength": 1,
             "type": "string"
           },
-          "Description": {
+          "description": {
             "type": "string",
             "nullable": true
           },
-          "TotalDays": {
+          "totalDays": {
             "maximum": 365,
             "minimum": 1,
             "type": "integer",
             "format": "int32"
           },
-          "Tasks": {
+          "tasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TaskDTO"
             }
           },
-          "DayStartHour": {
+          "dayStartHour": {
             "maximum": 23,
             "minimum": 0,
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "DayEndHour": {
+          "dayEndHour": {
             "maximum": 23,
             "minimum": 0,
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "MinRestHours": {
+          "minRestHours": {
             "maximum": 24,
             "minimum": 0,
             "type": "integer",
@@ -499,11 +499,11 @@
       "LoginUserDTO": {
         "type": "object",
         "properties": {
-          "Username": {
+          "username": {
             "type": "string",
             "nullable": true
           },
-          "Password": {
+          "password": {
             "type": "string",
             "nullable": true
           }
@@ -540,15 +540,15 @@
       "RegisterUserDTO": {
         "type": "object",
         "properties": {
-          "Username": {
+          "username": {
             "type": "string",
             "nullable": true
           },
-          "Email": {
+          "email": {
             "type": "string",
             "nullable": true
           },
-          "Password": {
+          "password": {
             "type": "string",
             "nullable": true
           }
@@ -558,23 +558,23 @@
       "ScheduleDTO": {
         "type": "object",
         "properties": {
-          "Id": {
+          "id": {
             "type": "string",
             "nullable": true
           },
-          "Name": {
+          "name": {
             "type": "string",
             "nullable": true
           },
-          "Description": {
+          "description": {
             "type": "string",
             "nullable": true
           },
-          "TotalDays": {
+          "totalDays": {
             "type": "integer",
             "format": "int32"
           },
-          "Tasks": {
+          "tasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TaskDTO"
@@ -587,37 +587,37 @@
       "TaskDTO": {
         "type": "object",
         "properties": {
-          "Id": {
+          "id": {
             "type": "string",
             "nullable": true
           },
-          "Name": {
+          "name": {
             "type": "string",
             "nullable": true
           },
-          "Description": {
+          "description": {
             "type": "string",
             "nullable": true
           },
-          "DurationHours": {
+          "durationHours": {
             "type": "integer",
             "format": "int32"
           },
-          "Type": {
+          "type": {
             "$ref": "#/components/schemas/TaskType"
           },
-          "Status": {
+          "status": {
             "$ref": "#/components/schemas/TaskProgress"
           },
-          "ScheduledStartTime": {
+          "scheduledStartTime": {
             "type": "string",
             "nullable": true
           },
-          "ScheduledEndTime": {
+          "scheduledEndTime": {
             "type": "string",
             "nullable": true
           },
-          "ScheduledDay": {
+          "scheduledDay": {
             "type": "integer",
             "format": "int32",
             "nullable": true

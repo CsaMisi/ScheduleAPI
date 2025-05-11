@@ -70,26 +70,29 @@ export const scheduleHandlers = {
     },
 
     async viewScheduleDetails(scheduleId) {
-        try {
-            appState.currentSchedule = await api.getScheduleById(scheduleId);
+    try {
+        console.log("Fetching schedule details for:", scheduleId);
+        appState.currentSchedule = await api.getScheduleById(scheduleId);
+        console.log("Received schedule:", appState.currentSchedule);
+        console.log("Tasks in schedule:", appState.currentSchedule.tasks);
 
-            // Update the schedule details
-            elements.scheduleDetailTitle.textContent = appState.currentSchedule.name;
-            elements.detailScheduleName.textContent = appState.currentSchedule.name;
-            elements.detailScheduleDescription.textContent = appState.currentSchedule.description || 'No description';
-            elements.detailScheduleDays.textContent = appState.currentSchedule.totalDays;
-            elements.detailScheduleTaskCount.textContent = appState.currentSchedule.tasks?.length || 0;
+        // Update the schedule details
+        elements.scheduleDetailTitle.textContent = appState.currentSchedule.name;
+        elements.detailScheduleName.textContent = appState.currentSchedule.name;
+        elements.detailScheduleDescription.textContent = appState.currentSchedule.description || 'No description';
+        elements.detailScheduleDays.textContent = appState.currentSchedule.totalDays;
+        elements.detailScheduleTaskCount.textContent = appState.currentSchedule.tasks?.length || 0;
 
-            // Render tasks
-            this.renderTasksList(appState.currentSchedule.tasks || []);
+        // Render tasks
+        this.renderTasksList(appState.currentSchedule.tasks || []);
 
-            // Show the schedule details view
-            utils.showView('view-schedule-details');
-        } catch (error) {
-            console.error('Failed to load schedule details:', error);
-            utils.showToast('Failed to load schedule details', 'danger');
-        }
-    },
+        // Show the schedule details view
+        utils.showView('view-schedule-details');
+    } catch (error) {
+        console.error('Failed to load schedule details:', error);
+        utils.showToast('Failed to load schedule details', 'danger');
+    }
+},
 
     renderTasksList(tasks) {
         elements.tasksContainer.innerHTML = '';
@@ -213,47 +216,55 @@ export const scheduleHandlers = {
         });
     },
 
-    async createOrUpdateSchedule(e) {
-        e.preventDefault();
+    async createOrUpdateTask(e) {
+    e.preventDefault();
 
-        // Base schedule data from user input
-        const scheduleData = {
-            name: document.getElementById('schedule-name').value,
-            description: document.getElementById('schedule-description').value,
-            totalDays: parseInt(document.getElementById('schedule-days').value),
-            // Adding default values that are required by the /api/Schedules/generate endpoint
-            tasks: [],
-            dayStartHour: 8,
-            dayEndHour: 20,
-            restHoursBetweenTasks: 0.5
-        };
+    // Ensure a schedule is currently selected when saving a task
+    if (!appState.currentSchedule) {
+        utils.showToast('Cannot save task: No schedule selected.', 'danger');
+        return;
+    }
 
-        try {
-            let schedule;
-            const scheduleId = document.getElementById('edit-schedule-id').value;
+    const taskData = {
+        name: document.getElementById('task-name').value,
+        description: document.getElementById('task-description').value,
+        type: parseInt(document.getElementById('task-type').value),
+        status: parseInt(document.getElementById('task-status').value),
+        durationHours: parseFloat(document.getElementById('task-duration').value),
+        scheduleId: appState.currentSchedule.id, // Associate task with the current schedule
+        scheduledDay: document.getElementById('task-day').value ? parseInt(document.getElementById('task-day').value) : null,
+        scheduledStartTime: document.getElementById('task-start-time').value || null,
+        scheduledEndTime: document.getElementById('task-end-time').value || null
+    };
 
-            if (scheduleId) {
-                // Update existing schedule
-                let scheduleDTO = api.getScheduleById(scheduleId);
-                schedule = await api.updateSchedule(scheduleId, {
-                    id: scheduleId,
-                    scheduleData : scheduleDTO
-                });
-                utils.showToast('Schedule updated successfully', 'success');
-            } else {
-                // Create new schedule
-                console.log('Creating new schedule with data:', scheduleData);
-                schedule = await api.createSchedule(scheduleData);
-                utils.showToast('Schedule created successfully', 'success');
-            }
+    console.log('Task data being sent:', taskData);
 
-            // Refresh schedules list and show details
-            await this.loadSchedules();
-            this.viewScheduleDetails(schedule.id);
-        } catch (error) {
-            console.error('Failed to save schedule:', error);
-            utils.showToast('Failed to save schedule', 'danger');
+    try {
+        const taskId = document.getElementById('edit-task-id').value;
+
+        if (taskId) {
+            // Update existing task
+            console.log('Updating existing task with ID:', taskId);
+            await api.updateTask(taskId, {
+                id: taskId,
+                ...taskData
+            });
+            utils.showToast('Task updated successfully', 'success');
+        } else {
+            // Create new task
+            console.log('Creating new task for schedule:', appState.currentSchedule.id);
+            const result = await api.createTask(taskData);
+            console.log('Task creation response:', result);
+            utils.showToast('Task created successfully', 'success');
         }
+
+        console.log('Refreshing schedule details...');
+        // Refresh schedule details to show updated task list
+        await scheduleHandlers.viewScheduleDetails(appState.currentSchedule.id);
+    } catch (error) {
+        console.error('Failed to save task:', error);
+        utils.showToast('Failed to save task', 'danger');
+    }
     },
 
     editSchedule() {
