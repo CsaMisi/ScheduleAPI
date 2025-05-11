@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\BACKEND\\ScheduleAPI\\ScheduleAPI.csproj": {}
+    "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\ScheduleAPI\\ScheduleAPI.csproj": {}
   },
   "projects": {
-    "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\BACKEND\\ScheduleAPI\\ScheduleAPI.csproj": {
+    "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\ScheduleAPI\\ScheduleAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\BACKEND\\ScheduleAPI\\ScheduleAPI.csproj",
+        "projectUniqueName": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\ScheduleAPI\\ScheduleAPI.csproj",
         "projectName": "ScheduleAPI",
-        "projectPath": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\BACKEND\\ScheduleAPI\\ScheduleAPI.csproj",
+        "projectPath": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\ScheduleAPI\\ScheduleAPI.csproj",
         "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\BACKEND\\ScheduleAPI\\obj\\",
+        "outputPath": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\ScheduleAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "bJR3v+4JF5U=",
+  "dgSpecHash": "WEVa3+gwAr0=",
   "success": true,
-  "projectFilePath": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\BACKEND\\ScheduleAPI\\ScheduleAPI.csproj",
+  "projectFilePath": "D:\\OE\\Sem_04\\FS-Semeseter\\TEVEKENYSEGMENEDZSER_NVRTMG_CSANKO\\root\\ScheduleAPI\\ScheduleAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\User\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.15\\microsoft.aspnetcore.authentication.jwtbearer.8.0.15.nupkg.sha512",
     "C:\\Users\\User\\.nuget\\packages\\microsoft.bcl.memory\\9.0.0\\microsoft.bcl.memory.9.0.0.nupkg.sha512",
