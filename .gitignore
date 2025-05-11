@@ -26,3 +26,5 @@
 /BACKEND/.vs
 /BACKEND/ScheduleAPI/.vs
 /BACKEND/ScheduleAPI/bin/Debug/net8.0
+/BACKEND/ScheduleAPI/obj/Debug/net8.0/ScheduleAPI.AssemblyInfo.cs
+/BACKEND/ScheduleAPI/obj/Debug/net8.0/ScheduleAPI.AssemblyInfoInputs.cache
