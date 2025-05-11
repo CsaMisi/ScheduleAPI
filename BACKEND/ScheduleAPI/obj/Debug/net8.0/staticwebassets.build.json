@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "w7sFU9IYUvLaFlmF7Kf+Z/8AF/rReVtPAlrJDsdm1qk=",
+  "Source": "ScheduleAPI",
+  "BasePath": "_content/ScheduleAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

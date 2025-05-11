@@ -150,6 +150,27 @@
   },
   {
     "ContainingType": "ScheduleAPI.Controllers.SchedulesController",
+    "Method": "AddTaskToSchedule",
+    "RelativePath": "api/Schedules/{id}/add-to-schedule",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "taskDto",
+        "Type": "ScheduleAPI.Data.TaskDTO",
+        "IsRequired": true
+      },
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "ScheduleAPI.Controllers.SchedulesController",
     "Method": "GenerateSchedule",
     "RelativePath": "api/Schedules/generate",
     "HttpMethod": "POST",
