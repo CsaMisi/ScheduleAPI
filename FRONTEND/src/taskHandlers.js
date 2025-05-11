@@ -55,49 +55,55 @@ export const taskHandlers = {
     },
 
     async createOrUpdateTask(e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        // Ensure a schedule is currently selected when saving a task
-        if (!appState.currentSchedule) {
-            utils.showToast('Cannot save task: No schedule selected.', 'danger');
-            return;
+    // Ensure a schedule is currently selected when saving a task
+    if (!appState.currentSchedule) {
+        utils.showToast('Cannot save task: No schedule selected.', 'danger');
+        return;
+    }
+
+    const taskData = {
+        name: document.getElementById('task-name').value,
+        description: document.getElementById('task-description').value,
+        type: parseInt(document.getElementById('task-type').value),
+        status: parseInt(document.getElementById('task-status').value),
+        durationHours: parseFloat(document.getElementById('task-duration').value),
+        scheduleId: appState.currentSchedule.id,
+        ScheduledDay: document.getElementById('task-day').value ? parseInt(document.getElementById('task-day').value) : null,
+        ScheduledStartTime: document.getElementById('task-start-time').value || null,
+        ScheduledEndTime: document.getElementById('task-end-time').value || null
+    };
+
+    console.log('Task data being sent:', taskData);
+
+    try {
+        const taskId = document.getElementById('edit-task-id').value;
+
+        if (taskId) {
+            // Update existing task
+            console.log('Updating existing task with ID:', taskId);
+            await api.updateTask(taskId, {
+                id: taskId,
+                ...taskData
+            });
+            utils.showToast('Task updated successfully', 'success');
+        } else {
+            // Create new task
+            console.log('Creating new task for schedule:', appState.currentSchedule.id);
+            const result = await api.createTask(taskData);
+            console.log('Task creation response:', result);
+            utils.showToast('Task created successfully', 'success');
         }
 
-        const taskData = {
-            description: document.getElementById('task-description').value,
-            name: document.getElementById('task-name').value,
-            type: parseInt(document.getElementById('task-type').value),
-            status: parseInt(document.getElementById('task-status').value),
-            durationHours: parseFloat(document.getElementById('task-duration').value),
-            scheduleId: appState.currentSchedule.id, // This will be extracted in the API call
-            scheduledDay: document.getElementById('task-day').value ? parseInt(document.getElementById('task-day').value) : null,
-            scheduledStartTime: document.getElementById('task-start-time').value || null,
-            scheduledEndTime: document.getElementById('task-end-time').value || null
-        };
-
-        try {
-            const taskId = document.getElementById('edit-task-id').value;
-
-            if (taskId) {
-                // Update existing task
-                await api.updateTask(taskId, {
-                    id: taskId,
-                    ...taskData
-                });
-                utils.showToast('Task updated successfully', 'success');
-            } else {
-                // Create new task
-                await api.createTask(taskData);
-                utils.showToast('Task created successfully', 'success');
-            }
-
-            // Refresh schedule details to show updated task list
-            scheduleHandlers.viewScheduleDetails(appState.currentSchedule.id);
-        } catch (error) {
-            console.error('Failed to save task:', error);
-            utils.showToast('Failed to save task', 'danger');
-        }
-    },
+        console.log('Refreshing schedule details...');
+        // Refresh schedule details to show updated task list
+        await scheduleHandlers.viewScheduleDetails(appState.currentSchedule.id);
+    } catch (error) {
+        console.error('Failed to save task:', error);
+        utils.showToast('Failed to save task', 'danger');
+    }
+},
 
     confirmDeleteTask(taskId) {
         // Find the task in the current schedule's task list
