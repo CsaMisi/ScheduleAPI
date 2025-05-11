@@ -1,0 +1,94 @@
+.hidden {
+    display: none;
+}
+.navbar-brand {
+    font-weight: bold;
+}
+.task-card {
+    margin-bottom: 15px;
+    transition: all 0.3s;
+}
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.schedule-card {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.schedule-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.schedule-action-buttons {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+}
+.btn-circle {
+    width: 35px;
+    height: 35px;
+    padding: 6px 0;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.428571429;
+}
+#schedule-details {
+    transition: all 0.5s;
+}
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading.hidden {
+    display: none !important;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+}
+.task-status-not-started { background-color: #f8f9fa; }
+.task-status-in-progress { background-color: #e7f5ff; }
+.task-status-completed { background-color: #d8f5d8; }
+.task-status-on-hold { background-color: #fff3cd; }
+.task-status-cancelled { background-color: #f8d7da; }
+
+.task-type-physical { border-left: 4px solid #0d6efd; }
+.task-type-mental { border-left: 4px solid #6f42c1; }
+.task-type-freetime { border-left: 4px solid #20c997; }
+.task-type-work { border-left: 4px solid #fd7e14; }
+.task-type-study { border-left: 4px solid #6c757d; }
+.task-type-other { border-left: 4px solid #dc3545; }
+
+.type-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+.day-separator {
+    background-color: #f8f9fa;
+    padding: 5px 10px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+}
