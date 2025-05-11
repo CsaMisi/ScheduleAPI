@@ -48,6 +48,8 @@ namespace ScheduleAPI.Controllers
             return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
         }
 
+        
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTask(Guid id, [FromBody] TaskDTO taskDto)
         {

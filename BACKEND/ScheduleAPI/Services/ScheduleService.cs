@@ -127,6 +127,18 @@ namespace ScheduleAPI.Services
             return schedule;
         }
 
+        public async Task<bool> AddTaskToScheduleAsync(Guid scheduleID, TaskDTO task, string? userId = null)
+        {
+            var schedule = await GetScheduleByIdAsync(scheduleID, userId);
+            if (schedule == null)
+            {
+                return false;
+            }
+            var newTask = await _taskService.CreateTaskAsync(task, userId ?? string.Empty);
+            schedule._schedule.Add(newTask);
+            return await System.Threading.Tasks.Task.FromResult(_repository.UpdateSchedule(schedule));
+        }
+
         public async Task<bool> DeleteScheduleAsync(Guid scheduleId, string? userId = null)
         {
             var schedule = await GetScheduleByIdAsync(scheduleId, userId);

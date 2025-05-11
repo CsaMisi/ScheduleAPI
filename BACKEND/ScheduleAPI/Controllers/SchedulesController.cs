@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ScheduleAPI.Data;
+using ScheduleAPI.Interfaces;
 using ScheduleAPI.Services;
 using System.Security.Cryptography;
 
@@ -55,6 +56,19 @@ namespace ScheduleAPI.Controllers
                 return BadRequest("Failed to generate schedule.");
 
             return CreatedAtAction(nameof(GetScheduleById), new { id = schedule.ID }, schedule);
+        }
+
+        [HttpPost("{id}/add-to-schedule")]
+        public async Task<IActionResult> AddTaskToSchedule([FromBody] TaskDTO taskDto, Guid id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = "01"; // Fixed user ID for testing without authentication
+            var schedule = await _scheduleService.AddTaskToScheduleAsync(id, taskDto);
+            if(schedule == false)
+                return NotFound("Schedule not found or you do not have access to it.");
+            return NoContent();
+
         }
 
         [HttpPut("{id}")]

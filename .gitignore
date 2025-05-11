@@ -23,3 +23,6 @@
 /ScheduleAPI/obj/Debug/net8.0/staticwebassets.build.endpoints.json
 /ScheduleAPI/obj/Debug/net8.0/staticwebassets.build.json
 /ScheduleAPI/obj/Debug/net8.0/staticwebassets.references.upToDateCheck.txt
+/BACKEND/.vs
+/BACKEND/ScheduleAPI/.vs
+/BACKEND/ScheduleAPI/bin/Debug/net8.0
