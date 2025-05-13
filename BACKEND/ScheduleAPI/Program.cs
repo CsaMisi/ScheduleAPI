@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi.Models;
 using ScheduleAPI.Data;
 using ScheduleAPI.Interfaces;
 using ScheduleAPI.Services;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,38 +15,12 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     options.JsonSerializerOptions.PropertyNamingPolicy = null;
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-}); ;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Schedule API", Version = "v1" });
-
-    // JWT Authentication setup is kept but commented out
-    /*
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-    */
 });
 
 // Add CORS
@@ -59,40 +34,34 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT Authentication is kept but commented out
-/*
-var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings.Issuer, 
-        ValidateAudience = true,
-        ValidAudience = jwtSettings.Audience, 
-        ValidateLifetime = true, 
-        ClockSkew = TimeSpan.Zero 
-    };
-});
-*/
-
-// Register services
+// Register services (with proper DI order)
+// First register the repository (data access layer)
 builder.Services.AddSingleton<IRepository, InMemory>();
+
+// Then register the services that depend on the repository
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<IScheduleGenerationService, ScheduleGenerationService>();
 builder.Services.AddScoped<ScheduleGenerationService>();
-//builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthService>();
+
+// Pre-populate the repository with a default user
+var serviceProvider = builder.Services.BuildServiceProvider();
+var repository = serviceProvider.GetRequiredService<IRepository>();
+
+// Add default user if it doesn't exist already
+if (repository.GetUserByUsername("admin") == null)
+{
+    repository.AddUser(new ScheduleAPI.Model.User
+    {
+        Id = "01", // Fixed user ID for testing
+        Username = "admin",
+        Email = "admin@example.com",
+        passwordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918" // admin
+    });
+}
 
 var app = builder.Build();
 
@@ -114,13 +83,3 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
-
-// JwtSettings class is kept for reference
-/*
-public class JwtSettings
-{
-    public string Secret { get; set; }
-    public string Issuer { get; set; }
-    public string Audience { get; set; }
-}
-*/
