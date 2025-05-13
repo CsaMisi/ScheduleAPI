@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using ScheduleAPI.Data;
+using ScheduleAPI.Interfaces;
 using ScheduleAPI.Model;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -10,25 +11,25 @@ namespace ScheduleAPI.Services
 {
     public class AuthService
     {
-        private readonly InMemory _database;
+        private readonly IRepository _repository;
         private readonly string _jwtSecret;
-        private readonly string _jwtIssuer; 
-        private readonly string _jwtAudience; 
+        private readonly string _jwtIssuer;
+        private readonly string _jwtAudience;
 
-
-        public AuthService(InMemory database, IConfiguration configuration)
+        public AuthService(IRepository repository, IConfiguration configuration)
         {
-            _database = database;
+            _repository = repository;
             // Fallback values are okay here, but ensure they match appsettings if possible
             _jwtSecret = configuration["Jwt:Secret"] ?? "thisthinghastobe32longsoheresthe";
             _jwtIssuer = configuration["Jwt:Issuer"] ?? "ScheduleAPI";
-            _jwtAudience = configuration["Jwt:Audience"] ?? "ScheduleClient"; 
+            _jwtAudience = configuration["Jwt:Audience"] ?? "ScheduleClient";
         }
 
         public async Task<User?> RegisterUserAsync(RegisterUserDTO registerDto)
         {
             // Check if username already exists
-            if (_database.Users.Any(u => u.Username == registerDto.Username))
+            var existingUser = _repository.GetUserByUsername(registerDto.Username);
+            if (existingUser != null)
             {
                 return null;
             }
@@ -44,13 +45,13 @@ namespace ScheduleAPI.Services
                 passwordHash = passwordHash
             };
 
-            _database.Users.Add(user);
+            _repository.AddUser(user);
             return await System.Threading.Tasks.Task.FromResult(user);
         }
 
         public async Task<AuthResponseDTO?> LoginAsync(LoginUserDTO loginDto)
         {
-            var user = _database.Users.FirstOrDefault(u => u.Username == loginDto.Username);
+            var user = _repository.GetUserByUsername(loginDto.Username);
 
             if (user == null || !VerifyPassword(loginDto.Password, user.passwordHash))
             {
@@ -63,7 +64,8 @@ namespace ScheduleAPI.Services
             return await System.Threading.Tasks.Task.FromResult(new AuthResponseDTO
             {
                 Token = token,
-                Username = user.Username
+                Username = user.Username,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
             });
         }
 
@@ -90,10 +92,10 @@ namespace ScheduleAPI.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
         /// <summary>
         /// Generates a SHA256 hash of a given string for secure storage or transmission. The output is a lowercase
         /// hexadecimal representation.
-        /// I copied this from AI0
         /// </summary>
         /// <param name="password">The input string that needs to be securely hashed.</param>
         /// <returns>A hexadecimal string representing the hashed value of the input.</returns>

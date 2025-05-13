@@ -1,19 +1,16 @@
 ﻿using ScheduleAPI.Data;
 using ScheduleAPI.Interfaces;
 using ScheduleAPI.Model;
-using System.Reflection;
 
 namespace ScheduleAPI.Services
 {
     public class ScheduleService : IScheduleService
     {
         private readonly IRepository _repository;
-        private readonly ITaskService _taskService;
 
-        public ScheduleService(IRepository repository, ITaskService taskService)
+        public ScheduleService(IRepository repository)
         {
             _repository = repository;
-            _taskService = taskService;
         }
 
         public async Task<List<Schedule>> GetAllSchedulesAsync(string? userId = null)
@@ -39,7 +36,6 @@ namespace ScheduleAPI.Services
             return await System.Threading.Tasks.Task.FromResult(MapToDTO(schedule));
         }
 
-
         public async Task<Schedule> CreateScheduleAsync(ScheduleDTO scheduleDto, string? userId = null)
         {
             var schedule = new Schedule
@@ -58,7 +54,8 @@ namespace ScheduleAPI.Services
             {
                 foreach (var taskDto in scheduleDto.Tasks)
                 {
-                    await _taskService.AddTaskToScheduleAsync(taskDto, userId ?? string.Empty, schedule.ID);
+                    var task = await CreateTaskFromDTOAsync(taskDto);
+                    _repository.AddTaskToSchedule(schedule.ID, task);
                 }
             }
 
@@ -90,30 +87,28 @@ namespace ScheduleAPI.Services
                 // Process each task in the DTO
                 foreach (var taskDto in scheduleDto.Tasks)
                 {
-                    // If task has ID, try to update it
                     if (!string.IsNullOrEmpty(taskDto.Id) && Guid.TryParse(taskDto.Id, out var taskId))
                     {
-                        var updated = await _taskService.UpdateTaskAsync(taskId, userId ?? string.Empty, taskDto);
-                        if (updated)
+                        // Existing task - update it
+                        var existingTask = _repository.GetTaskById(taskId);
+                        if (existingTask != null)
                         {
-                            var task = await _taskService.GetTaskByIdAsync(taskId, userId ?? string.Empty);
-                            if (task != null)
-                            {
-                                schedule.schedule.Add(task);
-                            }
+                            UpdateTaskFromDTO(existingTask, taskDto);
+                            _repository.UpdateTask(existingTask);
+                            schedule.schedule.Add(existingTask);
                         }
                         else
                         {
-                            // If update fails, create a new task
-                            var task = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
-                            schedule.schedule.Add(task);
+                            // Task not found, create a new one
+                            var newTask = await CreateTaskFromDTOAsync(taskDto);
+                            schedule.schedule.Add(newTask);
                         }
                     }
                     else
                     {
                         // Create new task
-                        var task = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
-                        schedule.schedule.Add(task);
+                        var newTask = await CreateTaskFromDTOAsync(taskDto);
+                        schedule.schedule.Add(newTask);
                     }
                 }
 
@@ -121,7 +116,7 @@ namespace ScheduleAPI.Services
                 foreach (var removedTask in existingTasks.Where(
                     t => !schedule.schedule.Any(st => st.Id == t.Id)))
                 {
-                    await _taskService.DeleteTaskAsync(removedTask.Id, userId ?? string.Empty);
+                    _repository.DeleteTask(removedTask.Id);
                 }
             }
 
@@ -131,7 +126,7 @@ namespace ScheduleAPI.Services
 
         public async Task<bool> AddTaskToScheduleAsync(Guid scheduleID, TaskDTO taskDto, string? userId = null)
         {
-            // Get the actual Schedule entity directly
+            // Get the actual Schedule entity
             var schedule = _repository.GetScheduleById(scheduleID);
 
             if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
@@ -140,28 +135,20 @@ namespace ScheduleAPI.Services
             }
 
             // Create and add the task
-            var newTask = await _taskService.CreateTaskAsync(taskDto, userId ?? string.Empty);
-            schedule.schedule.Add(newTask);
-
-            // Update the schedule
-            return _repository.UpdateSchedule(schedule);
+            var newTask = await CreateTaskFromDTOAsync(taskDto);
+            return _repository.AddTaskToSchedule(scheduleID, newTask);
         }
 
         public async Task<bool> DeleteScheduleAsync(Guid scheduleId, string? userId = null)
         {
-            var schedule = await GetScheduleByIdAsync(scheduleId, userId);
+            var schedule = _repository.GetScheduleById(scheduleId);
 
-            if (schedule == null)
+            if (schedule == null || (!string.IsNullOrEmpty(userId) && schedule.UserId != userId))
             {
                 return false;
             }
 
-            // Delete all tasks in the schedule
-            foreach (var task in schedule.Tasks.ToList())
-            {
-                await _taskService.DeleteTaskAsync(Guid.Parse(task.Id), userId ?? string.Empty);
-            }
-
+            // Delete the schedule from the repository
             return await System.Threading.Tasks.Task.FromResult(_repository.DeleteSchedule(scheduleId));
         }
 
@@ -186,6 +173,41 @@ namespace ScheduleAPI.Services
                     ScheduledEndTime = t.ScheduledEndTime?.ToString("o")
                 }).ToList()
             };
+        }
+
+        private async Task<Model.Task> CreateTaskFromDTOAsync(TaskDTO taskDto)
+        {
+            var task = new Model.Task
+            {
+                Id = !string.IsNullOrEmpty(taskDto.Id) && Guid.TryParse(taskDto.Id, out var id) ? id : Guid.NewGuid(),
+                Name = taskDto.Name,
+                Description = taskDto.Description,
+                DurationHours = taskDto.DurationHours,
+                Type = taskDto.Type,
+                Status = taskDto.Status,
+                ScheduledStartTime = !string.IsNullOrEmpty(taskDto.ScheduledStartTime) ?
+                    DateTime.Parse(taskDto.ScheduledStartTime) : null,
+                ScheduledEndTime = !string.IsNullOrEmpty(taskDto.ScheduledEndTime) ?
+                    DateTime.Parse(taskDto.ScheduledEndTime) : null,
+                ScheduledDay = taskDto.ScheduledDay
+            };
+
+            _repository.AddTask(task);
+            return await System.Threading.Tasks.Task.FromResult(task);
+        }
+
+        private void UpdateTaskFromDTO(Model.Task task, TaskDTO taskDto)
+        {
+            task.Name = taskDto.Name;
+            task.Description = taskDto.Description;
+            task.DurationHours = taskDto.DurationHours;
+            task.Type = taskDto.Type;
+            task.Status = taskDto.Status;
+            task.ScheduledStartTime = !string.IsNullOrEmpty(taskDto.ScheduledStartTime) ?
+                DateTime.Parse(taskDto.ScheduledStartTime) : null;
+            task.ScheduledEndTime = !string.IsNullOrEmpty(taskDto.ScheduledEndTime) ?
+                DateTime.Parse(taskDto.ScheduledEndTime) : null;
+            task.ScheduledDay = taskDto.ScheduledDay;
         }
     }
 }

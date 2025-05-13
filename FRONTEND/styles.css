@@ -71,6 +71,13 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-cell:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    z-index: 10;
 }
 
 .task-cell .task-name {
@@ -80,6 +87,13 @@
 .task-cell .task-duration {
     font-size: 0.8em;
     opacity: 0.8;
+}
+
+.task-cell .task-status {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.75em;
 }
 
 .empty-cell {
@@ -96,4 +110,60 @@
 .page-info {
     font-weight: bold;
     padding: 0 15px;
+}
+
+/* Schedule list styles */
+.schedule-item {
+    transition: background-color 0.2s ease;
+}
+
+.schedule-item:hover {
+    background-color: #f8f9fa;
+}
+
+.schedule-item .badge {
+    margin-left: 5px;
+}
+
+/* Status badges */
+.badge-not-started {
+    background-color: #6c757d; /* Gray */
+}
+
+.badge-in-progress {
+    background-color: #17a2b8; /* Blue */
+}
+
+.badge-completed {
+    background-color: #28a745; /* Green */
+}
+
+.badge-on-hold {
+    background-color: #ffc107; /* Yellow */
+}
+
+.badge-cancelled {
+    background-color: #dc3545; /* Red */
+}
+
+/* Animation for loading */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* Button spacing */
+.card-header button {
+    margin-left: 8px;
+}
+
+/* Schedule management button styling */
+.schedule-buttons {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
 }
