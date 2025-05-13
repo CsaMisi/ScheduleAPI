@@ -14,7 +14,7 @@ namespace ScheduleAPI.Services
         }
 
         public async Task<List<Model.Task>> GetAllTasksAsync(string? userId)
-        {
+       {
             if (string.IsNullOrEmpty(userId))
             {
                 return await System.Threading.Tasks.Task.FromResult(_repository.GetAllTasks());

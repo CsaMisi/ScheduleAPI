@@ -228,12 +228,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 dayEndHour,
                 minRestHours,
                 tasks: tasks.map(task => ({
-                    id: task.id,
-                    name: task.name,
-                    description: task.description,
-                    durationHours: task.durationHours,
-                    type: task.type,
-                    status: task.status
+                    id: task.Id,
+                    name: task.Name,
+                    description: task.Description,
+                    durationHours: task.DurationHours,
+                    type: task.Type,
+                    status: task.Status
                 }))
             };
             
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Received schedule from API:', schedule);
             
             // Store current schedule ID
-            currentScheduleId = schedule.id;
+            currentScheduleId = schedule.ID;
             
             // Display the schedule
             displaySchedule(schedule, dayStartHour, dayEndHour);
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('scheduleSection').classList.remove('d-none');
             
             // Add schedule management buttons
-            addScheduleManagementButtons(schedule.id);
+            addScheduleManagementButtons(schedule.ID);
             
         } catch (error) {
             console.error('Error generating schedule:', error);
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const scheduleData = await response.json();
-            console.log(`Schedule ${scheduleId} data:`, scheduleData);
+            console.log(`Schedule ${scheduleData.Id} data:`, scheduleData);
             return scheduleData;
         } catch (error) {
             console.error(`Error loading schedule ${scheduleId}:`, error);
@@ -442,14 +442,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${schedules.map(schedule => `
                                 <button type="button" 
                                     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center schedule-item" 
-                                    data-schedule-id="${schedule.id}">
+                                    data-schedule-id="${schedule.ID}">
                                     <div>
-                                        <strong>${schedule.name}</strong>
-                                        <span class="badge bg-primary rounded-pill ms-2">${schedule.totalDays} nap</span>
-                                        ${schedule.description ? `<small class="text-muted d-block">${schedule.description}</small>` : ''}
+                                        <strong>${schedule.Name}</strong>
+                                        <span class="badge bg-primary rounded-pill ms-2">${schedule.TotalDays} nap</span>
+                                        ${schedule.Description ? `<small class="text-muted d-block">${schedule.Description}</small>` : ''}
                                     </div>
                                     <div>
-                                        <span class="badge bg-info rounded-pill">${schedule.schedule ? schedule.schedule.length : 0} tevékenység</span>
+                                        <span class="badge bg-info rounded-pill">${schedule.Schedule ? schedule.Schedule.length : 0} tevékenység</span>
                                     </div>
                                 </button>
                             `).join('')}
@@ -462,6 +462,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
+        displaySchedule(schedules);
+
         // Add modal to body
         document.body.appendChild(modal);
         
@@ -503,6 +505,8 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.addEventListener('hidden.bs.modal', () => {
             modal.remove();
         });
+
+        
     }
     
     /**
@@ -513,17 +517,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Extract tasks from the schedule
         let tasks = [];
-        if (schedule.tasks && schedule.tasks.$values) {
-            tasks = schedule.tasks.$values;
-        } else if (schedule.schedule && schedule.schedule.$values) {
-            tasks = schedule.schedule.$values;
-        } else if (Array.isArray(schedule.tasks)) {
-            tasks = schedule.tasks;
-        } else if (Array.isArray(schedule.schedule)) {
-            tasks = schedule.schedule;
+        if (schedule.Tasks && schedule.Tasks.$values) {
+            tasks = schedule.Tasks.$values;
+        } else if (schedule.Schedule && schedule.Schedule.$values) {
+            tasks = schedule.Schedule.$values;
+        } else if (Array.isArray(schedule.Tasks)) {
+            tasks = schedule.Tasks;
+        } else if (Array.isArray(schedule.Schedule)) {
+            tasks = schedule.Schedule;
         }
         
-        const totalDays = schedule.totalDays;
+        const totalDays = schedule.TotalDays;
         
         // Create table
         const table = document.createElement('table');
