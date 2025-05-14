@@ -150,41 +150,55 @@ document.addEventListener('DOMContentLoaded', function() {
      * Update the task list display
      */
     function updateTaskList(tasks) {
-        taskList.innerHTML = '';
-        
-        if (!tasks || tasks.length === 0) {
-            taskList.innerHTML = '<li class="list-group-item">Nincsenek hozzáadott tevékenységek</li>';
-            return;
-        }
-        
-        
-        for (let index = 0; index < tasks.length; index++) {
-            let task = tasks[index];
-            console.log(task)
-            const li = document.createElement('li');
-            li.className = 'list-group-item task-item';
-            
-            // Create task info div
-            const taskInfo = document.createElement('div');
-            taskInfo.innerHTML = `
-                <strong>${task.Name}</strong> (${task.DurationHours} óra)
-                <span class="badge bg-secondary">${taskTypes[task.Type]}</span>
-                ${task.status !== null ? `<span class="badge bg-info">${taskStatuses[task.Status]}</span>` : ''}
-                ${task.description ? `<small class="text-muted d-block">${task.Description}</small>` : ''}
-            `;
-            
-            // Create delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn btn-sm btn-danger';
-            deleteBtn.textContent = 'Törlés';
-            deleteBtn.addEventListener('click', () => deleteTask(task.Id));
-            
-            // Append elements
-            li.appendChild(taskInfo);
-            li.appendChild(deleteBtn);
-            taskList.appendChild(li);
-        };
+    taskList.innerHTML = '';
+    
+    if (!tasks || tasks.length === 0) {
+        taskList.innerHTML = '<li class="list-group-item">Nincsenek hozzáadott tevékenységek</li>';
+        return;
     }
+    
+    
+    for (let index = 0; index < tasks.length; index++) {
+        let task = tasks[index];
+        console.log(task)
+        const li = document.createElement('li');
+        li.className = 'list-group-item task-item';
+        
+        // Create task info div
+        const taskInfo = document.createElement('div');
+        taskInfo.innerHTML = `
+            <strong>${task.Name}</strong> (${task.DurationHours} óra)
+            <span class="badge bg-secondary">${taskTypes[task.Type]}</span>
+            ${task.status !== null ? `<span class="badge bg-info">${taskStatuses[task.Status]}</span>` : ''}
+            ${task.description ? `<small class="text-muted d-block">${task.Description}</small>` : ''}
+        `;
+        
+        // Create button container
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'task-buttons';
+        
+        // Create edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-secondary me-2';
+        editBtn.textContent = 'Szerkesztés';
+        editBtn.addEventListener('click', () => showTaskUpdateModal(task));
+        
+        // Create delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-sm btn-danger';
+        deleteBtn.textContent = 'Törlés';
+        deleteBtn.addEventListener('click', () => deleteTask(task.Id));
+        
+        // Append buttons
+        btnContainer.appendChild(editBtn);
+        btnContainer.appendChild(deleteBtn);
+        
+        // Append elements
+        li.appendChild(taskInfo);
+        li.appendChild(btnContainer);
+        taskList.appendChild(li);
+    };
+}
     
     /**
      * Generate schedule based on tasks and settings
@@ -447,11 +461,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div>
                     <strong>${schedule.Name}</strong>
                     <span class="badge bg-primary rounded-pill ms-2">${schedule.TotalDays} nap</span>
+                    <span class="badge bg-info rounded-pill ms-2">${taskCount} tevékenység</span>
                 </div>
                 <div>
-                    <span class="badge bg-info rounded-pill">${taskCount} tevékenység</span>
                     <button class="btn btn-sm btn-outline-primary view-schedule-btn" data-schedule-id="${schedule.ID}">
                         Megtekintés
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary edit-schedule-btn ms-2" data-schedule-id="${schedule.ID}">
+                        Szerkesztés
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-schedule-btn ms-2" data-schedule-id="${schedule.ID}">
+                        Törlés
                     </button>
                 </div>
             `;
@@ -471,9 +491,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
+        
+        // Add event listeners to edit buttons
+        schedulesList.querySelectorAll('.edit-schedule-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const scheduleId = btn.dataset.scheduleId;
+                showScheduleEditModal(scheduleId);
+            });
+        });
+        
+        // Add event listeners to delete buttons
+        schedulesList.querySelectorAll('.delete-schedule-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const scheduleId = btn.dataset.scheduleId;
+                if (confirm('Biztosan törölni szeretné ezt az ütemezést?')) {
+                    await deleteSchedule(scheduleId);
+                    // Refresh the schedules list
+                    const schedules = await loadSchedules();
+                    showSchedulesList(schedules);
+                    
+                    // If the current displayed schedule was deleted, hide it
+                    if (currentScheduleId === scheduleId) {
+                        scheduleTable.innerHTML = '';
+                        document.getElementById('scheduleSection').classList.add('d-none');
+                        currentScheduleId = null;
+                    }
+                }
+            });
+        });
     }
     
-    // Create modal with schedules list
+    // Create modal with schedules list (update similar to above with edit buttons)
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.id = 'schedulesModal';
@@ -506,18 +554,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                             
                             return `
-                                <button type="button" 
-                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center schedule-item" 
-                                    data-schedule-id="${schedule.ID}">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <strong>${schedule.Name}</strong>
                                         <span class="badge bg-primary rounded-pill ms-2">${schedule.TotalDays} nap</span>
+                                        <span class="badge bg-info rounded-pill ms-2">${taskCount} tevékenység</span>
                                         ${schedule.Description ? `<small class="text-muted d-block">${schedule.Description}</small>` : ''}
                                     </div>
                                     <div>
-                                        <span class="badge bg-info rounded-pill">${taskCount} tevékenység</span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary modal-view-btn" data-schedule-id="${schedule.ID}">
+                                            Megtekintés
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary modal-edit-btn ms-2" data-schedule-id="${schedule.ID}">
+                                            Szerkesztés
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger modal-delete-btn ms-2" data-schedule-id="${schedule.ID}">
+                                            Törlés
+                                        </button>
                                     </div>
-                                </button>
+                                </div>
                             `;
                         }).join('')}
                     </div>
@@ -528,19 +583,16 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
     `;
-    
-    // Remove this incorrect line
-    // displaySchedule(schedules);
 
     document.body.appendChild(modal);
     
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
     
-    // Event listeners for modal items remain the same
-    modal.querySelectorAll('.schedule-item').forEach(item => {
-        item.addEventListener('click', async () => {
-            const scheduleId = item.dataset.scheduleId;
+    // Add event listeners to modal view buttons
+    modal.querySelectorAll('.modal-view-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const scheduleId = btn.dataset.scheduleId;
             const schedule = await loadScheduleById(scheduleId);
             
             if (schedule) {
@@ -551,6 +603,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 addScheduleManagementButtons(scheduleId);
             } else {
                 alert('Nem sikerült betölteni az ütemezést.');
+            }
+        });
+    });
+    
+    // Add event listeners to modal edit buttons
+    modal.querySelectorAll('.modal-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const scheduleId = btn.dataset.scheduleId;
+            bootstrapModal.hide();
+            showScheduleEditModal(scheduleId);
+        });
+    });
+    
+    // Add event listeners to modal delete buttons
+    modal.querySelectorAll('.modal-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const scheduleId = btn.dataset.scheduleId;
+            if (confirm('Biztosan törölni szeretné ezt az ütemezést?')) {
+                await deleteSchedule(scheduleId);
+                
+                // Refresh the modal content
+                bootstrapModal.hide();
+                const schedules = await loadSchedules();
+                showSchedulesList(schedules);
+                
+                // If the current displayed schedule was deleted, hide it
+                if (currentScheduleId === scheduleId) {
+                    scheduleTable.innerHTML = '';
+                    document.getElementById('scheduleSection').classList.add('d-none');
+                    currentScheduleId = null;
+                }
             }
         });
     });
@@ -721,40 +804,217 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Show a modal to update task status
      */
-    function showTaskUpdateModal(task) {
-        // Create modal for task update
+   function showTaskUpdateModal(task) {
+    console.log('Task for edit:', task);
+    
+    // Normalize task properties to handle both camelCase and PascalCase
+    const taskId = task.Id || task.id;
+    const taskName = task.Name || task.name;
+    const taskDescription = task.Description || task.description || '';
+    const taskDuration = task.DurationHours || task.durationHours;
+    const taskType = task.Type !== undefined ? task.Type : (task.type !== undefined ? task.type : 0);
+    const taskStatus = task.Status !== undefined ? task.Status : (task.status !== undefined ? task.status : 0);
+    const scheduledStartTime = task.ScheduledStartTime || task.scheduledStartTime;
+    const scheduledEndTime = task.ScheduledEndTime || task.scheduledEndTime;
+    const scheduledDay = task.ScheduledDay || task.scheduledDay;
+    
+    // Create modal for task update
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'taskUpdateModal';
+    modal.tabIndex = '-1';
+    modal.setAttribute('aria-labelledby', 'taskUpdateModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskUpdateModalLabel">Tevékenység szerkesztése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskUpdateForm">
+                        <div class="mb-3">
+                            <label for="editTaskName" class="form-label">Tevékenység neve</label>
+                            <input type="text" class="form-control" id="editTaskName" value="${taskName}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTaskStatus" class="form-label">Állapot</label>
+                            <select class="form-select" id="editTaskStatus">
+                                ${taskStatuses.map((status, index) => 
+                                    `<option value="${index}" ${taskStatus === index ? 'selected' : ''}>${status}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTaskDescription" class="form-label">Leírás</label>
+                            <input type="text" class="form-control" id="editTaskDescription" value="${taskDescription}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTaskDuration" class="form-label">Időigény (óra)</label>
+                            <input type="number" class="form-control" id="editTaskDuration" min="1" value="${taskDuration}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editTaskType" class="form-label">Típus</label>
+                            <select class="form-select" id="editTaskType" required>
+                                ${taskTypes.map((type, index) => 
+                                    `<option value="${index}" ${taskType === index ? 'selected' : ''}>${type}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        
+                        ${scheduledDay ? `
+                        <div class="mb-3">
+                            <label class="form-label">Ütemezett nap</label>
+                            <input type="number" class="form-control" id="editScheduledDay" value="${scheduledDay}" readonly>
+                            <small class="form-text text-muted">Az ütemezett nap az ütemezés újragenerálásával módosítható</small>
+                        </div>
+                        ` : ''}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégsem</button>
+                    <button type="button" class="btn btn-primary" id="updateTaskBtn">Mentés</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.appendChild(modal);
+    
+    // Initialize the modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Handle task update
+    document.getElementById('updateTaskBtn').addEventListener('click', async () => {
+        // Get values from form
+        const newName = document.getElementById('editTaskName').value;
+        const newDescription = document.getElementById('editTaskDescription').value;
+        const newDuration = parseInt(document.getElementById('editTaskDuration').value);
+        const newType = parseInt(document.getElementById('editTaskType').value);
+        const newStatus = parseInt(document.getElementById('editTaskStatus').value);
+        
+        // Validate input
+        if (!newName || newDuration < 1) {
+            alert('Kérem töltse ki a kötelező mezőket!');
+            return;
+        }
+        
+        // Create a properly formatted update object
+        const updatedTask = {
+            Id: taskId,
+            Name: newName,
+            Description: newDescription,
+            DurationHours: newDuration,
+            Type: newType,
+            Status: newStatus
+        };
+        
+        // Add optional properties if they exist
+        if (scheduledStartTime) updatedTask.ScheduledStartTime = scheduledStartTime;
+        if (scheduledEndTime) updatedTask.ScheduledEndTime = scheduledEndTime;
+        if (scheduledDay) updatedTask.ScheduledDay = scheduledDay;
+        
+        console.log('Sending update:', updatedTask);
+        
+        try {
+            // Update task via API
+            const response = await fetch(`${API_URL}/Task/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedTask)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                throw new Error(`Failed to update task: ${response.status} ${response.statusText}`);
+            }
+            
+            // Close modal
+            bootstrapModal.hide();
+            
+            // If we have a current schedule, reload it
+            if (currentScheduleId) {
+                const updatedSchedule = await loadScheduleById(currentScheduleId);
+                if (updatedSchedule) {
+                    displaySchedule(updatedSchedule, 8, 22); // Using default values
+                }
+            }
+            
+            // Reload task list
+            loadTasks();
+            
+        } catch (error) {
+            console.error('Error updating task:', error);
+            alert(`Hiba történt a tevékenység frissítése során: ${error.message}`);
+        }
+    });
+    
+    // Remove modal from DOM after it's hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+        modal.remove();
+    });
+}
+    function showScheduleEditModal(scheduleId) {
+    // First, load the schedule data
+    loadScheduleById(scheduleId).then(schedule => {
+        if (!schedule) {
+            alert('Nem sikerült betölteni az ütemezést.');
+            return;
+        }
+        
+        // Normalize schedule properties
+        const name = schedule.Name || schedule.name;
+        const description = schedule.Description || schedule.description || '';
+        const totalDays = schedule.TotalDays || schedule.totalDays;
+        
+        // Create modal for schedule edit
         const modal = document.createElement('div');
         modal.className = 'modal fade';
-        modal.id = 'taskUpdateModal';
+        modal.id = 'scheduleEditModal';
         modal.tabIndex = '-1';
-        modal.setAttribute('aria-labelledby', 'taskUpdateModalLabel');
+        modal.setAttribute('aria-labelledby', 'scheduleEditModalLabel');
         modal.setAttribute('aria-hidden', 'true');
         
         modal.innerHTML = `
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="taskUpdateModalLabel">Tevékenység állapot frissítése</h5>
+                        <h5 class="modal-title" id="scheduleEditModalLabel">Ütemezés szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="taskUpdateForm">
+                        <form id="scheduleEditForm">
                             <div class="mb-3">
-                                <label class="form-label">Tevékenység: <strong>${task.name}</strong></label>
+                                <label for="editScheduleName" class="form-label">Ütemezés neve</label>
+                                <input type="text" class="form-control" id="editScheduleName" value="${name}" required>
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="taskStatus" class="form-label">Állapot</label>
-                                <select class="form-select" id="taskStatus">
-                                    ${taskStatuses.map((status, index) => 
-                                        `<option value="${index}" ${task.status === index ? 'selected' : ''}>${status}</option>`
-                                    ).join('')}
-                                </select>
+                                <label for="editScheduleDescription" class="form-label">Leírás</label>
+                                <input type="text" class="form-control" id="editScheduleDescription" value="${description}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editScheduleTotalDays" class="form-label">Napok száma</label>
+                                <input type="number" class="form-control" id="editScheduleTotalDays" min="1" max="365" value="${totalDays}" required>
+                                <small class="form-text text-muted">A napok számának módosítása nem változtatja meg a meglévő ütemezett tevékenységeket.</small>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégsem</button>
-                        <button type="button" class="btn btn-primary" id="updateTaskBtn">Mentés</button>
+                        <button type="button" class="btn btn-primary" id="updateScheduleBtn">Mentés</button>
                     </div>
                 </div>
             </div>
@@ -767,47 +1027,110 @@ document.addEventListener('DOMContentLoaded', function() {
         const bootstrapModal = new bootstrap.Modal(modal);
         bootstrapModal.show();
         
-        // Handle task update
-        document.getElementById('updateTaskBtn').addEventListener('click', async () => {
-            const newStatus = parseInt(document.getElementById('taskStatus').value);
+        // Handle schedule update
+        document.getElementById('updateScheduleBtn').addEventListener('click', async () => {
+            // Get values from form
+            const newName = document.getElementById('editScheduleName').value;
+            const newDescription = document.getElementById('editScheduleDescription').value;
+            const newTotalDays = parseInt(document.getElementById('editScheduleTotalDays').value);
             
-            // Update task object
-            const updatedTask = {
-                ...task,
-                status: newStatus
+            // Validate input
+            if (!newName || newTotalDays < 1) {
+                alert('Kérem töltse ki a kötelező mezőket!');
+                return;
+            }
+            
+            // Get tasks from the current schedule
+            let taskDTOs = [];
+            
+            // Extract tasks from the schedule
+            let tasks = [];
+            if (schedule.tasks && schedule.tasks.$values) {
+                tasks = schedule.tasks.$values;
+            } else if (schedule.Tasks && schedule.Tasks.$values) {
+                tasks = schedule.Tasks.$values;
+            } else if (schedule.schedule && schedule.schedule.$values) {
+                tasks = schedule.schedule.$values;
+            } else if (schedule.Schedule && schedule.Schedule.$values) {
+                tasks = schedule.Schedule.$values;
+            } else if (Array.isArray(schedule.tasks)) {
+                tasks = schedule.tasks;
+            } else if (Array.isArray(schedule.Tasks)) {
+                tasks = schedule.Tasks;
+            } else if (Array.isArray(schedule.schedule)) {
+                tasks = schedule.schedule;
+            } else if (Array.isArray(schedule.Schedule)) {
+                tasks = schedule.Schedule;
+            }
+            
+            // Convert tasks to DTOs
+            taskDTOs = tasks.map(task => {
+                const taskId = task.Id || task.id;
+                const taskName = task.Name || task.name;
+                const taskDescription = task.Description || task.description;
+                const taskDuration = task.DurationHours || task.durationHours;
+                const taskType = task.Type !== undefined ? task.Type : (task.type !== undefined ? task.type : 0);
+                const taskStatus = task.Status !== undefined ? task.Status : (task.status !== undefined ? task.status : 0);
+                const scheduledStartTime = task.ScheduledStartTime || task.scheduledStartTime;
+                const scheduledEndTime = task.ScheduledEndTime || task.scheduledEndTime;
+                const scheduledDay = task.ScheduledDay || task.scheduledDay;
+                
+                return {
+                    Id: taskId,
+                    Name: taskName,
+                    Description: taskDescription,
+                    DurationHours: taskDuration,
+                    Type: taskType,
+                    Status: taskStatus,
+                    ScheduledStartTime: scheduledStartTime,
+                    ScheduledEndTime: scheduledEndTime,
+                    ScheduledDay: scheduledDay
+                };
+            });
+            
+            // Create a properly formatted update object
+            const updatedSchedule = {
+                Id: scheduleId,
+                Name: newName,
+                Description: newDescription,
+                TotalDays: newTotalDays,
+                Tasks: taskDTOs
             };
             
+            console.log('Sending update:', updatedSchedule);
+            
             try {
-                // Update task via API
-                const response = await fetch(`${API_URL}/Task/${task.id}`, {
+                // Update schedule via API
+                const response = await fetch(`${API_URL}/Schedules/${scheduleId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(updatedTask)
+                    body: JSON.stringify(updatedSchedule)
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`Failed to update task: ${response.status} ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`Failed to update schedule: ${response.status} ${response.statusText}`);
                 }
                 
                 // Close modal
                 bootstrapModal.hide();
                 
-                // If we have a current schedule, reload it
-                if (currentScheduleId) {
-                    const updatedSchedule = await loadScheduleById(currentScheduleId);
-                    if (updatedSchedule) {
-                        displaySchedule(updatedSchedule, 8, 22); // Using default values
-                    }
+                // Reload and display the updated schedule
+                const refreshedSchedule = await loadScheduleById(scheduleId);
+                if (refreshedSchedule) {
+                    displaySchedule(refreshedSchedule, 8, 22);
                 }
                 
-                // Reload task list
-                loadTasks();
+                // Refresh the schedules list if displayed
+                const schedules = await loadSchedules();
+                showSchedulesList(schedules);
                 
             } catch (error) {
-                console.error('Error updating task:', error);
-                alert(`Hiba történt a tevékenység frissítése során: ${error.message}`);
+                console.error('Error updating schedule:', error);
+                alert(`Hiba történt az ütemezés frissítése során: ${error.message}`);
             }
         });
         
@@ -815,5 +1138,52 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.addEventListener('hidden.bs.modal', () => {
             modal.remove();
         });
+    });
+}
+function addScheduleManagementButtons(scheduleId) {
+    // Remove existing buttons if any
+    const existingButtons = document.querySelector('.schedule-buttons');
+    if (existingButtons) {
+        existingButtons.remove();
     }
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'mt-3 d-flex justify-content-between schedule-buttons';
+    
+    // Add "View Existing Schedules" button
+    const viewSchedulesBtn = document.createElement('button');
+    viewSchedulesBtn.className = 'btn btn-primary';
+    viewSchedulesBtn.textContent = 'Meglévő ütemezések megtekintése';
+    viewSchedulesBtn.addEventListener('click', async () => {
+        const schedules = await loadSchedules();
+        showSchedulesList(schedules);
+    });
+    
+    // Add "Edit This Schedule" button
+    const editScheduleBtn = document.createElement('button');
+    editScheduleBtn.className = 'btn btn-secondary';
+    editScheduleBtn.textContent = 'Ütemezés szerkesztése';
+    editScheduleBtn.addEventListener('click', () => {
+        showScheduleEditModal(scheduleId);
+    });
+    
+    // Add "Delete This Schedule" button
+    const deleteScheduleBtn = document.createElement('button');
+    deleteScheduleBtn.className = 'btn btn-danger';
+    deleteScheduleBtn.textContent = 'Ütemezés törlése';
+    deleteScheduleBtn.addEventListener('click', async () => {
+        if (confirm('Biztosan törölni szeretné ezt az ütemezést?')) {
+            await deleteSchedule(scheduleId);
+            scheduleTable.innerHTML = '';
+            document.getElementById('scheduleSection').classList.add('d-none');
+            buttonContainer.remove();
+        }
+    });
+    
+    buttonContainer.appendChild(viewSchedulesBtn);
+    buttonContainer.appendChild(editScheduleBtn);
+    buttonContainer.appendChild(deleteScheduleBtn);
+    
+    scheduleTable.after(buttonContainer);
+}
 });
