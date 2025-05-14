@@ -85,19 +85,29 @@ namespace ScheduleAPI.Data
 
             // 2. Create tasks from the DTOs
             var tasks = new List<Model.Task>();
+            
             foreach (var taskDto in generateDto.Tasks)
             {
-                var task = new Model.Task
+                Model.Task task;
+                if (!string.IsNullOrEmpty(taskDto.Id) 
+                    && Guid.TryParse(taskDto.Id, out var id)
+                    && GetTaskById(id) != null)
+                    task = GetTaskById(id);
+                else
                 {
-                    Name = taskDto.Name,
-                    Description = taskDto.Description,
-                    DurationHours = taskDto.DurationHours,
-                    Type = taskDto.Type,
-                    Status = taskDto.Status ?? Enums.TaskProgress.NotStarted
-                };
+                    task = new Model.Task
+                    {
+                        Name = taskDto.Name,
+                        Description = taskDto.Description,
+                        DurationHours = taskDto.DurationHours,
+                        Type = taskDto.Type,
+                        Status = taskDto.Status ?? Enums.TaskProgress.NotStarted
+                    };
 
-                // Add the task to the repository
-                AddTask(task);
+                    // Add the task to the repository
+                    AddTask(task);
+                }
+                    
                 tasks.Add(task);
             }
 

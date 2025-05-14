@@ -417,29 +417,95 @@ document.addEventListener('DOMContentLoaded', function() {
      * Show a list of existing schedules
      */
     function showSchedulesList(schedules) {
-        if (!schedules || schedules.length === 0) {
-            alert('Nincsenek mentett ütemezések.');
-            return;
-        }
+    if (!schedules || schedules.length === 0) {
+        alert('Nincsenek mentett ütemezések.');
+        return;
+    }
+    
+    // Update the static list below the button
+    const schedulesList = document.getElementById('schedulesList');
+    if (schedulesList) {
+        schedulesList.innerHTML = '';
+        schedules.forEach(schedule => {
+            // Get task count using the same logic as displaySchedule
+            let taskCount = 0;
+            if (schedule.schedule && schedule.schedule.$values) {
+                taskCount = schedule.schedule.$values.length;
+            } else if (schedule.schedule && Array.isArray(schedule.schedule)) {
+                taskCount = schedule.schedule.length;
+            } else if (schedule.tasks && schedule.tasks.$values) {
+                taskCount = schedule.tasks.$values.length;
+            } else if (schedule.Tasks && schedule.Tasks.$values) {
+                taskCount = schedule.Tasks.$values.length;
+            } else if (schedule.Schedule && schedule.Schedule.$values) {
+                taskCount = schedule.Schedule.$values.length;
+            }
+            
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+                <div>
+                    <strong>${schedule.Name}</strong>
+                    <span class="badge bg-primary rounded-pill ms-2">${schedule.TotalDays} nap</span>
+                </div>
+                <div>
+                    <span class="badge bg-info rounded-pill">${taskCount} tevékenység</span>
+                    <button class="btn btn-sm btn-outline-primary view-schedule-btn" data-schedule-id="${schedule.ID}">
+                        Megtekintés
+                    </button>
+                </div>
+            `;
+            schedulesList.appendChild(listItem);
+        });
         
-        // Create modal with schedules list
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.id = 'schedulesModal';
-        modal.tabIndex = '-1';
-        modal.setAttribute('aria-labelledby', 'schedulesModalLabel');
-        modal.setAttribute('aria-hidden', 'true');
-        
-        modal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="schedulesModalLabel">Mentett ütemezések</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="list-group">
-                            ${schedules.map(schedule => `
+        // Add event listeners to view buttons
+        schedulesList.querySelectorAll('.view-schedule-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const scheduleId = btn.dataset.scheduleId;
+                const schedule = await loadScheduleById(scheduleId);
+                if (schedule) {
+                    currentScheduleId = scheduleId;
+                    displaySchedule(schedule, 8, 22);
+                    document.getElementById('scheduleSection').classList.remove('d-none');
+                    addScheduleManagementButtons(scheduleId);
+                }
+            });
+        });
+    }
+    
+    // Create modal with schedules list
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'schedulesModal';
+    modal.tabIndex = '-1';
+    modal.setAttribute('aria-labelledby', 'schedulesModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="schedulesModalLabel">Mentett ütemezések</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        ${schedules.map(schedule => {
+                            // Get task count consistently 
+                            let taskCount = 0;
+                            if (schedule.schedule && schedule.schedule.$values) {
+                                taskCount = schedule.schedule.$values.length;
+                            } else if (schedule.schedule && Array.isArray(schedule.schedule)) {
+                                taskCount = schedule.schedule.length;
+                            } else if (schedule.tasks && schedule.tasks.$values) {
+                                taskCount = schedule.tasks.$values.length;
+                            } else if (schedule.Tasks && schedule.Tasks.$values) {
+                                taskCount = schedule.Tasks.$values.length;
+                            } else if (schedule.Schedule && schedule.Schedule.$values) {
+                                taskCount = schedule.Schedule.$values.length;
+                            }
+                            
+                            return `
                                 <button type="button" 
                                     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center schedule-item" 
                                     data-schedule-id="${schedule.ID}">
@@ -449,184 +515,208 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${schedule.Description ? `<small class="text-muted d-block">${schedule.Description}</small>` : ''}
                                     </div>
                                     <div>
-                                        <span class="badge bg-info rounded-pill">${schedule.Schedule ? schedule.Schedule.length : 0} tevékenység</span>
+                                        <span class="badge bg-info rounded-pill">${taskCount} tevékenység</span>
                                     </div>
                                 </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
+                </div>
             </div>
-        `;
-        
-        displaySchedule(schedules);
+        </div>
+    `;
+    
+    // Remove this incorrect line
+    // displaySchedule(schedules);
 
-        // Add modal to body
-        document.body.appendChild(modal);
-        
-        // Initialize the modal
-        const bootstrapModal = new bootstrap.Modal(modal);
-        bootstrapModal.show();
-        
-        // Add event listeners to schedule items
-        modal.querySelectorAll('.schedule-item').forEach(item => {
-            item.addEventListener('click', async () => {
-                const scheduleId = item.dataset.scheduleId;
-                const schedule = await loadScheduleById(scheduleId);
-                
-                if (schedule) {
-                    bootstrapModal.hide();
-                    
-                    // Get settings from the schedule or use defaults
-                    const dayStartHour = 8; // Default value if not in the schedule
-                    const dayEndHour = 22; // Default value if not in the schedule
-                    
-                    // Update current schedule ID
-                    currentScheduleId = scheduleId;
-                    
-                    // Display the schedule
-                    displaySchedule(schedule, dayStartHour, dayEndHour);
-                    
-                    // Show schedule section
-                    document.getElementById('scheduleSection').classList.remove('d-none');
-                    
-                    // Add management buttons
-                    addScheduleManagementButtons(scheduleId);
-                } else {
-                    alert('Nem sikerült betölteni az ütemezést.');
-                }
-            });
+    document.body.appendChild(modal);
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Event listeners for modal items remain the same
+    modal.querySelectorAll('.schedule-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const scheduleId = item.dataset.scheduleId;
+            const schedule = await loadScheduleById(scheduleId);
+            
+            if (schedule) {
+                bootstrapModal.hide();
+                currentScheduleId = scheduleId;
+                displaySchedule(schedule, 8, 22);
+                document.getElementById('scheduleSection').classList.remove('d-none');
+                addScheduleManagementButtons(scheduleId);
+            } else {
+                alert('Nem sikerült betölteni az ütemezést.');
+            }
         });
-        
-        // Remove modal from DOM after it's hidden
-        modal.addEventListener('hidden.bs.modal', () => {
-            modal.remove();
-        });
-
-        
-    }
+    });
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+        modal.remove();
+    });
+}
     
     /**
      * Display the schedule in a table
      */
     function displaySchedule(schedule, dayStartHour, dayEndHour) {
-        console.log('Displaying schedule:', schedule);
+    console.log('Displaying schedule:', schedule);
+    
+    // Extract tasks from the schedule
+    let tasks = [];
+    if (schedule.tasks && schedule.tasks.$values) {
+        tasks = schedule.tasks.$values;
+    } else if (schedule.Tasks && schedule.Tasks.$values) {
+        tasks = schedule.Tasks.$values;
+    } else if (schedule.schedule && schedule.schedule.$values) {
+        tasks = schedule.schedule.$values;
+    } else if (schedule.Schedule && schedule.Schedule.$values) {
+        tasks = schedule.Schedule.$values;
+    } else if (Array.isArray(schedule.tasks)) {
+        tasks = schedule.tasks;
+    } else if (Array.isArray(schedule.Tasks)) {
+        tasks = schedule.Tasks;
+    } else if (Array.isArray(schedule.schedule)) {
+        tasks = schedule.schedule;
+    } else if (Array.isArray(schedule.Schedule)) {
+        tasks = schedule.Schedule;
+    }
+    
+    console.log('Tasks for display:', tasks);
+    
+    const totalDays = schedule.TotalDays;
+    
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'schedule-table table table-bordered';
+    
+    // Create header row
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    // Add time column header
+    const timeHeader = document.createElement('th');
+    timeHeader.textContent = 'Idő';
+    timeHeader.className = 'time-column';
+    headerRow.appendChild(timeHeader);
+    
+    // Add day columns headers
+    for (let day = 1; day <= totalDays; day++) {
+        const dayHeader = document.createElement('th');
+        dayHeader.textContent = `Nap ${day}`;
+        headerRow.appendChild(dayHeader);
+    }
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // Create table body
+    const tbody = document.createElement('tbody');
+    
+    // Create hour rows
+    for (let hour = dayStartHour; hour < dayEndHour; hour++) {
+        const hourRow = document.createElement('tr');
+        hourRow.className = 'hour-row';
         
-        // Extract tasks from the schedule
-        let tasks = [];
-        if (schedule.Tasks && schedule.Tasks.$values) {
-            tasks = schedule.Tasks.$values;
-        } else if (schedule.Schedule && schedule.Schedule.$values) {
-            tasks = schedule.Schedule.$values;
-        } else if (Array.isArray(schedule.Tasks)) {
-            tasks = schedule.Tasks;
-        } else if (Array.isArray(schedule.Schedule)) {
-            tasks = schedule.Schedule;
-        }
+        // Add time cell
+        const timeCell = document.createElement('td');
+        timeCell.className = 'time-column';
+        timeCell.textContent = `${hour}:00 - ${hour+1}:00`;
+        hourRow.appendChild(timeCell);
         
-        const totalDays = schedule.TotalDays;
-        
-        // Create table
-        const table = document.createElement('table');
-        table.className = 'schedule-table table table-bordered';
-        
-        // Create header row
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        
-        // Add time column header
-        const timeHeader = document.createElement('th');
-        timeHeader.textContent = 'Idő';
-        timeHeader.className = 'time-column';
-        headerRow.appendChild(timeHeader);
-        
-        // Add day columns headers
+        // Add empty cells for each day
         for (let day = 1; day <= totalDays; day++) {
-            const dayHeader = document.createElement('th');
-            dayHeader.textContent = `Nap ${day}`;
-            headerRow.appendChild(dayHeader);
+            const dayCell = document.createElement('td');
+            dayCell.className = 'empty-cell';
+            dayCell.dataset.day = day;
+            dayCell.dataset.hour = hour;
+            hourRow.appendChild(dayCell);
         }
         
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-        
-        // Create table body
-        const tbody = document.createElement('tbody');
-        
-        // Create hour rows
-        for (let hour = dayStartHour; hour < dayEndHour; hour++) {
-            const hourRow = document.createElement('tr');
-            hourRow.className = 'hour-row';
+        tbody.appendChild(hourRow);
+    }
+    
+    table.appendChild(tbody);
+    
+    // Clear previous schedule
+    scheduleTable.innerHTML = '';
+    scheduleTable.appendChild(table);
+    
+    // Fill in tasks
+    if (tasks && tasks.length > 0) {
+        tasks.forEach(task => {
+            // Handle case insensitivity - get the correct property names
+            const scheduledDay = task.ScheduledDay || task.scheduledDay;
+            const scheduledStartTime = task.ScheduledStartTime || task.scheduledStartTime;
+            const scheduledEndTime = task.ScheduledEndTime || task.scheduledEndTime;
+            const durationHours = task.DurationHours || task.durationHours;
+            const name = task.Name || task.name;
+            const description = task.Description || task.description;
+            const status = task.Status !== undefined ? task.Status : (task.status !== undefined ? task.status : null);
+            const type = task.Type !== undefined ? task.Type : (task.type !== undefined ? task.type : 0);
             
-            // Add time cell
-            const timeCell = document.createElement('td');
-            timeCell.className = 'time-column';
-            timeCell.textContent = `${hour}:00 - ${hour+1}:00`;
-            hourRow.appendChild(timeCell);
+            console.log('Task to place:', {
+                name, 
+                day: scheduledDay, 
+                start: scheduledStartTime, 
+                duration: durationHours
+            });
             
-            // Add empty cells for each day
-            for (let day = 1; day <= totalDays; day++) {
-                const dayCell = document.createElement('td');
-                dayCell.className = 'empty-cell';
-                dayCell.dataset.day = day;
-                dayCell.dataset.hour = hour;
-                hourRow.appendChild(dayCell);
-            }
-            
-            tbody.appendChild(hourRow);
-        }
-        
-        table.appendChild(tbody);
-        
-        // Clear previous schedule
-        scheduleTable.innerHTML = '';
-        scheduleTable.appendChild(table);
-        
-        // Fill in tasks
-        if (tasks && tasks.length > 0) {
-            tasks.forEach(task => {
-                if (task.scheduledDay && task.scheduledStartTime && task.scheduledEndTime) {
-                    // Parse scheduled times
-                    const startTime = new Date(task.scheduledStartTime);
-                    const endTime = new Date(task.scheduledEndTime);
-                    const startHour = startTime.getHours();
-                    const duration = task.durationHours;
-                    const day = task.scheduledDay;
+            if (scheduledDay && scheduledStartTime) {
+                // Parse scheduled times
+                let startTime, startHour;
+                try {
+                    startTime = new Date(scheduledStartTime);
+                    startHour = startTime.getHours();
+                } catch (e) {
+                    console.error('Error parsing task time:', e);
+                    return; // Skip this task if time can't be parsed
+                }
+                
+                const duration = durationHours || 1;  // Default to 1 if not specified
+                const day = scheduledDay;
+                
+                // Find cell for the task's start time
+                const dayCell = table.querySelector(`td[data-day="${day}"][data-hour="${startHour}"]`);
+                
+                if (dayCell) {
+                    console.log(`Placing task ${name} in day ${day}, hour ${startHour}`);
                     
-                    // Find cell for the task's start time
-                    const dayCell = table.querySelector(`td[data-day="${day}"][data-hour="${startHour}"]`);
+                    // Set task styling
+                    dayCell.className = `task-cell task-type-${type}`;
+                    dayCell.rowSpan = duration; // Merge cells vertically based on duration
                     
-                    if (dayCell) {
-                        // Set task styling
-                        dayCell.className = `task-cell task-type-${task.type}`;
-                        dayCell.rowSpan = duration; // Merge cells vertically based on duration
-                        
-                        // Add task content
-                        dayCell.innerHTML = `
-                            <div class="task-name">${task.name}</div>
-                            <div class="task-duration">${duration} óra</div>
-                            ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
-                            ${task.status !== null ? `<div class="task-status badge bg-info">${taskStatuses[task.status]}</div>` : ''}
-                        `;
-                        
-                        // Add click handler for task status updates
-                        dayCell.addEventListener('click', () => showTaskUpdateModal(task));
-                        
-                        // Remove cells that are now covered by the rowspan
-                        for (let h = 1; h < duration; h++) {
-                            const cellToRemove = table.querySelector(`td[data-day="${day}"][data-hour="${startHour + h}"]`);
-                            if (cellToRemove) {
-                                cellToRemove.remove();
-                            }
+                    // Add task content
+                    dayCell.innerHTML = `
+                        <div class="task-name">${name}</div>
+                        <div class="task-duration">${duration} óra</div>
+                        ${description ? `<div class="task-description">${description}</div>` : ''}
+                        ${status !== null ? `<div class="task-status badge bg-info">${taskStatuses[status]}</div>` : ''}
+                    `;
+                    
+                    // Add click handler for task status updates
+                    dayCell.addEventListener('click', () => showTaskUpdateModal(task));
+                    
+                    // Remove cells that are now covered by the rowspan
+                    for (let h = 1; h < duration; h++) {
+                        const cellToRemove = table.querySelector(`td[data-day="${day}"][data-hour="${startHour + h}"]`);
+                        if (cellToRemove) {
+                            cellToRemove.remove();
                         }
                     }
+                } else {
+                    console.warn(`Could not find cell for day ${day}, hour ${startHour}`);
                 }
-            });
-        }
+            } else {
+                console.warn('Task missing scheduled day or start time:', task);
+            }
+        });
     }
+}
     
     /**
      * Show a modal to update task status
